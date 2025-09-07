@@ -17,9 +17,13 @@ try {
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false, // biar kelihatan prosesnya
-    defaultViewport: null,
-  });
+  headless: true, // bisa juga "new"
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+  ],
+});
+
 
   const page = await browser.newPage();
   await page.setCookie(...cookies);
