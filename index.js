@@ -1,4 +1,4 @@
-const puppeteer = require("puppeteer");
+  const puppeteer = require("puppeteer");
 const fs = require("fs");
 
 let cookies = [];
@@ -17,57 +17,58 @@ try {
 
 (async () => {
   const browser = await puppeteer.launch({
-  headless: true, // bisa juga "new"
-  args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-  ],
-});
-
+    headless: true, // bisa juga "new"
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
 
   const page = await browser.newPage();
   await page.setCookie(...cookies);
 
   // buka Instagram
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
-
   console.log("✅ Login dengan cookies berhasil");
 
   // =====================
-  // 1. LIKE BERANDA
+  // 1. AUTO LIKE FEED (pakai tap)
   // =====================
   async function autoLike(total = 10, interval = 3000) {
     let count = 0;
     await page.evaluate(() => window.scrollTo(0, 0)); // mulai dari atas
 
     while (count < total) {
-      let liked = await page.evaluate(() => {
-        let btns = [...document.querySelectorAll('svg[aria-label="Suka"]')]
-          .map(svg => svg.closest("button"))
-          .filter(btn => btn && btn.offsetParent !== null);
-        if (btns.length > 0) {
-          btns[0].scrollIntoView({ behavior: "smooth" });
-          btns[0].click();
-          return true;
+      try {
+        const btns = await page.$$('svg[aria-label="Like"]');
+
+        if (btns.length === 0) {
+          await page.evaluate(() => window.scrollBy(0, 500));
+          await page.waitForTimeout(1000);
+          continue;
         }
-        return false;
-      });
 
-      if (liked) {
-        count++;
-        console.log(`❤️ Like ke-${count}`);
-      } else {
-        await page.evaluate(() => window.scrollBy(0, 500));
+        // Ambil tombol pertama yang kelihatan
+        const btn = btns[0];
+        const boundingBox = await btn.boundingBox();
+
+        if (boundingBox) {
+          await page.touchscreen.tap(
+            boundingBox.x + boundingBox.width / 2,
+            boundingBox.y + boundingBox.height / 2
+          );
+          count++;
+          console.log(`❤️ Like ke-${count}`);
+        }
+
+        await page.waitForTimeout(interval);
+      } catch (err) {
+        console.error("❌ Gagal klik like:", err);
       }
-
-      await new Promise(r => setTimeout(r, interval));
     }
   }
 
   await autoLike(10, 3000);
 
   // =====================
-  // 2 & 3. FOLLOW FOLLOWERS TARGET
+  // 2. AUTO FOLLOW FOLLOWERS TARGET
   // =====================
   async function autoFollowFromTarget(username, total = 10, interval = 3000) {
     await page.goto(`https://www.instagram.com/${username}/`, {
@@ -84,8 +85,9 @@ try {
       let followed = await page.evaluate(() => {
         let dialog = document.querySelector('div[role="dialog"] ul');
         if (!dialog) return false;
-        let btns = [...dialog.querySelectorAll("button")]
-          .filter(b => b.innerText.trim() === "Ikuti");
+        let btns = [...dialog.querySelectorAll("button")].filter(
+          (b) => b.innerText.trim() === "Ikuti"
+        );
         if (btns.length > 0) {
           btns[0].scrollIntoView({ behavior: "smooth" });
           btns[0].click();
@@ -104,7 +106,7 @@ try {
         });
       }
 
-      await new Promise(r => setTimeout(r, interval));
+      await new Promise((r) => setTimeout(r, interval));
     }
   }
 
@@ -113,5 +115,3 @@ try {
   console.log("✅ Selesai semua tugas");
   await browser.close();
 })();
-
-    
