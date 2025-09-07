@@ -22,6 +22,13 @@ try {
   });
 
   const page = await browser.newPage();
+
+  // ✅ set user-agent & viewport seperti mobile (Kiwi Browser)
+  await page.setUserAgent(
+    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
+  );
+  await page.setViewport({ width: 390, height: 844, isMobile: true });
+
   await page.setCookie(...cookies);
 
   // buka Instagram
@@ -37,7 +44,10 @@ try {
 
     while (count < total) {
       try {
-        const btns = await page.$$('svg[aria-label="Like"]');
+        // cari tombol like (bahasa Inggris & Indonesia)
+        const btns = await page.$$(
+          'svg[aria-label="Like"], svg[aria-label="Suka"]'
+        );
 
         if (btns.length === 0) {
           await page.evaluate(() => window.scrollBy(0, 500));
@@ -45,8 +55,8 @@ try {
           continue;
         }
 
-        // Ambil tombol pertama yang kelihatan
-        const btn = btns[0];
+        // Ambil tombol pertama yang kelihatan → parent button
+        const btn = await btns[0].evaluateHandle(el => el.closest("button"));
         const boundingBox = await btn.boundingBox();
 
         if (boundingBox) {
