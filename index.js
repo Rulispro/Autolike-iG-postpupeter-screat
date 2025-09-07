@@ -1,7 +1,19 @@
 const puppeteer = require("puppeteer");
+const fs = require("fs");
 
-// ganti dengan cookies Instagram kamu (format array JSON dari DevTools > Application > Cookies > copy all)
-const cookies = require("./cookies.json");
+let cookies = [];
+try {
+  const raw = fs.readFileSync("./cookies.json", "utf8");
+  console.log("---- ISI COOKIES.JSON ----");
+  console.log(raw);
+  console.log("--------------------------");
+
+  cookies = JSON.parse(raw);
+  console.log("✅ Cookies berhasil di-parse, total:", cookies.length);
+} catch (err) {
+  console.error("❌ Gagal baca cookies.json:", err.message);
+  process.exit(1);
+}
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -54,16 +66,13 @@ const cookies = require("./cookies.json");
   // 2 & 3. FOLLOW FOLLOWERS TARGET
   // =====================
   async function autoFollowFromTarget(username, total = 10, interval = 3000) {
-    // buka profil target
     await page.goto(`https://www.instagram.com/${username}/`, {
       waitUntil: "networkidle2",
     });
 
-    // klik followers
     await page.waitForSelector(`a[href="/${username}/followers/"]`);
     await page.click(`a[href="/${username}/followers/"]`);
 
-    // tunggu popup
     await page.waitForSelector('div[role="dialog"] ul');
 
     let count = 0;
@@ -95,10 +104,10 @@ const cookies = require("./cookies.json");
     }
   }
 
-  // Contoh pakai akun target @instagram
   await autoFollowFromTarget("instagram", 10, 3000);
 
-  // selesai
   console.log("✅ Selesai semua tugas");
   await browser.close();
 })();
+
+    
