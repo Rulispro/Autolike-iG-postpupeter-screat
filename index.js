@@ -1,4 +1,4 @@
-  const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer");
 const fs = require("fs");
 
 let cookies = [];
@@ -17,7 +17,7 @@ try {
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: true, // bisa juga "new"
+    headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
@@ -41,7 +41,7 @@ try {
 
         if (btns.length === 0) {
           await page.evaluate(() => window.scrollBy(0, 500));
-          await page.waitForTimeout(1000);
+          await new Promise(r => setTimeout(r, 1000));
           continue;
         }
 
@@ -58,7 +58,7 @@ try {
           console.log(`❤️ Like ke-${count}`);
         }
 
-        await page.waitForTimeout(interval);
+        await new Promise(r => setTimeout(r, interval));
       } catch (err) {
         console.error("❌ Gagal klik like:", err);
       }
@@ -106,7 +106,7 @@ try {
         });
       }
 
-      await new Promise((r) => setTimeout(r, interval));
+      await new Promise(r => setTimeout(r, interval));
     }
   }
 
