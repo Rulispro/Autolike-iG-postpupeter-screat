@@ -1,0 +1,23 @@
+[
+  {
+    "domain": ".instagram.com",
+    "expirationDate": 1725312345.123,
+    "hostOnly": false,
+    "httpOnly": true,
+    "name": "sessionid",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "50889346009%3AXL7dNFFnAInbFW%3A13%3AAYeP6_n0LMYxepQYf_AWCFNnxOIC5Sdf-0gMz0GjnA"
+  },
+  {
+    "domain": ".instagram.com",
+    "hostOnly": false,
+    "httpOnly": false,
+    "name": "csrftoken",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": true,
+    "value": "T1nhWuiIK6fXTLn9m3Idy9dWb5FL6pkr"
+  }
+]
