@@ -19,61 +19,51 @@ try {
 }
 
 // =====================
-// 2. AutoLike Function
+// 2. AutoLike (versi bookmarklet)
 // =====================
 async function autoLike(page, maxLikes = 10, interval = 3000) {
-  console.log(`🚀 Mulai AutoLike: target ${maxLikes} like`);
+  console.log(`🚀 Jalankan AutoLike mirip bookmarklet: target ${maxLikes} like`);
 
-  let count = 0;
-  const clicked = new Set();
+  await page.evaluate(
+    async (max, interval) => {
+      let delay = ms => new Promise(r => setTimeout(r, ms));
+      let count = 0;
+      let clicked = new Set();
 
-  while (count < maxLikes) {
-    // cari tombol like (bisa "Like" atau "Suka")
-    const btns = await page.$$('svg[aria-label="Like"], svg[aria-label="Suka"]');
+      window.scrollTo(0, 0);
+      await delay(500);
 
-    if (btns.length === 0) {
-      console.log("🔄 Tidak ada tombol Like terlihat, scroll dulu...");
-      await page.evaluate(() => window.scrollBy(0, 600));
-      await page.waitForTimeout(1500);
-      continue;
-    }
+      while (count < max) {
+        let btns = [...document.querySelectorAll('svg[aria-label="Suka"], svg[aria-label="Like"]')]
+          .map(svg => svg.closest('[role=button]'))
+          .filter(btn => btn && btn.offsetParent !== null && !clicked.has(btn));
 
-    for (let svg of btns) {
-      if (count >= maxLikes) break;
-
-      // ambil parent button dari svg
-      const parentBtn = await svg.evaluateHandle(el => el.closest("button"));
-
-      if (parentBtn && !clicked.has(parentBtn)) {
-        try {
-          await parentBtn.scrollIntoViewIfNeeded();
-          await page.waitForTimeout(500);
-
-          await parentBtn.click(); // klik ❤️
-
-          count++;
-          clicked.add(parentBtn);
-          console.log(`❤️ Like ke-${count}`);
-
-          await page.waitForTimeout(interval);
-        } catch (err) {
-          console.log(`❌ Gagal klik like:`, err.message);
+        if (btns.length === 0) {
+          window.scrollBy(0, 500);
+          await delay(500);
+          continue;
         }
+
+        let btn = btns[0];
+        clicked.add(btn);
+        btn.scrollIntoView({ behavior: "smooth" });
+        btn.click();
+        console.log("❤️ Klik love ke", ++count);
+
+        await delay(interval);
       }
-    }
+    },
+    maxLikes,
+    interval
+  );
 
-    // scroll ke bawah untuk cari posting baru
-    await page.evaluate(() => window.scrollBy(0, 800));
-    await page.waitForTimeout(1500);
-  }
-
-  console.log(`✅ Selesai AutoLike, total berhasil: ${count}`);
+  console.log(`✅ AutoLike selesai`);
 }
 
 // =====================
 // 3. AutoFollow Function
 // =====================
-async function autoFollowFromTarget(page, username, total = 10, interval = 3000) {
+async function autoFollowFromTarget(page, username, total = 5, interval = 3000) {
   console.log(`🚀 Mulai AutoFollow dari @${username}, target ${total}`);
 
   await page.goto(`https://www.instagram.com/${username}/`, {
