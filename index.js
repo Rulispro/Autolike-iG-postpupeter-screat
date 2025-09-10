@@ -25,25 +25,33 @@ try {
 async function autoLike(page, maxLikes = 10, interval = 3000) {
   console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
-  // bikin delay sendiri
   const delay = ms => new Promise(r => setTimeout(r, ms));
-
   let count = 0;
+
+  // multi bahasa biar aman
+  const likeSelector = [
+    'svg[aria-label="Suka"]',
+    'svg[aria-label="Like"]',
+    'svg[aria-label="Curtir"]',
+    'svg[aria-label="J’aime"]',
+    'svg[aria-label="Me gusta"]',
+    'svg[aria-label="Gefällt mir"]'
+  ].join(',');
+
   while (count < maxLikes) {
     let clicked = false;
 
-    // === 1. Coba pakai evaluate ===
+    // === 1. Evaluate ===
     try {
-      clicked = await page.evaluate(() => {
-        const svg = document.querySelector('svg[aria-label="Suka"], svg[aria-label="Like"]');
+      clicked = await page.evaluate((sel) => {
+        const svg = document.querySelector(sel);
         if (!svg) return false;
-        const btn = svg.closest('[role=button]');
+        const btn = svg.closest('[role=button], button');
         if (!btn) return false;
         btn.scrollIntoView({ behavior: "smooth", block: "center" });
         btn.click();
         return true;
-      });
-
+      }, likeSelector);
       if (clicked) {
         count++;
         console.log(`❤️ (evaluate) Klik like ke-${count}`);
@@ -51,29 +59,29 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
         continue;
       }
     } catch (e) {
-      console.log("⚠️ Gagal pakai evaluate:", e.message);
+      console.log("⚠️ Evaluate error:", e.message);
     }
 
-    // === 2. Coba pakai page.$ + click ===
+    // === 2. page.$ + click ===
     try {
-      const btn = await page.$('svg[aria-label="Suka"], svg[aria-label="Like"]');
+      const btn = await page.$(likeSelector);
       if (btn) {
-        const parent = await btn.evaluateHandle(el => el.closest('[role=button]'));
+        const parent = await btn.evaluateHandle(el => el.closest('[role=button], button'));
         if (parent) {
           await parent.click();
           count++;
-          console.log(`❤️ (page.$.click) Klik like ke-${count}`);
+          console.log(`❤️ (page.$) Klik like ke-${count}`);
           await delay(interval);
           continue;
         }
       }
     } catch (e) {
-      console.log("⚠️ Gagal pakai page.$.click:", e.message);
+      console.log("⚠️ page.$ click error:", e.message);
     }
 
-    // === 3. Coba pakai touchscreen.tap ===
+    // === 3. touchscreen.tap ===
     try {
-      const btn = await page.$('svg[aria-label="Suka"], svg[aria-label="Like"]');
+      const btn = await page.$(likeSelector);
       if (btn) {
         const box = await btn.boundingBox();
         if (box) {
@@ -85,10 +93,10 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
         }
       }
     } catch (e) {
-      console.log("⚠️ Gagal pakai tap:", e.message);
+      console.log("⚠️ Tap error:", e.message);
     }
 
-    // === kalau semua gagal → scroll ===
+    // === 4. Kalau semua gagal → scroll ===
     console.log("❌ Tidak ada tombol like ditemukan, scroll...");
     await page.evaluate(() => window.scrollBy(0, 500));
     await delay(1000);
@@ -96,6 +104,7 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
   console.log("✅ AutoLike selesai");
 }
+
 
 // =====================
 // 3. AutoFollow Function
