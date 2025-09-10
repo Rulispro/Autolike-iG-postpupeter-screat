@@ -38,44 +38,56 @@ try {
   // =====================
   // 1. AUTO LIKE FEED (pakai tap)
   // =====================
-  async function autoLike(total = 10, interval = 3000) {
-    let count = 0;
-    await page.evaluate(() => window.scrollTo(0, 0)); // mulai dari atas
+  async function autoLike(page, maxLikes = 10, interval = 3000) {
+  console.log(`🚀 Mulai AutoLike: target ${maxLikes} like`);
 
-    while (count < total) {
-      try {
-        // cari tombol like (bahasa Inggris & Indonesia)
-        const btns = await page.$$(
-          'svg[aria-label="Like"], svg[aria-label="Suka"]'
-        );
+  let count = 0;
+  const clicked = new Set();
 
-        if (btns.length === 0) {
-          await page.evaluate(() => window.scrollBy(0, 500));
-          await new Promise(r => setTimeout(r, 1000));
-          continue;
-        }
+  while (count < maxLikes) {
+    // cari tombol like (ikon hati kosong)
+    const btns = await page.$$('svg[aria-label="Like"]');
 
-        // Ambil tombol pertama yang kelihatan → parent button
-        const btn = await btns[0].evaluateHandle(el => el.closest("button"));
-        const boundingBox = await btn.boundingBox();
+    if (btns.length === 0) {
+      console.log("🔄 Tidak ada tombol Like terlihat, scroll dulu...");
+      await page.evaluate(() => window.scrollBy(0, 500));
+      await page.waitForTimeout(1000);
+      continue;
+    }
 
-        if (boundingBox) {
-          await page.touchscreen.tap(
-            boundingBox.x + boundingBox.width / 2,
-            boundingBox.y + boundingBox.height / 2
-          );
+    for (let svg of btns) {
+      if (count >= maxLikes) break;
+
+      // ambil parent button dari svg
+      const parentBtn = await svg.evaluateHandle(el => el.closest('button'));
+
+      if (parentBtn && !clicked.has(parentBtn)) {
+        try {
+          await parentBtn.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(500);
+
+          // bisa pilih salah satu:
+          await parentBtn.click();   // lebih stabil
+          // await parentBtn.tap();  // kalau mau pakai tap langsung
+
           count++;
+          clicked.add(parentBtn);
           console.log(`❤️ Like ke-${count}`);
-        }
 
-        await new Promise(r => setTimeout(r, interval));
-      } catch (err) {
-        console.error("❌ Gagal klik like:", err);
+          await page.waitForTimeout(interval);
+        } catch (err) {
+          console.log(`❌ Gagal klik like:`, err.message);
+        }
       }
     }
+
+    // scroll lanjut untuk cari postingan baru
+    await page.evaluate(() => window.scrollBy(0, 800));
+    await page.waitForTimeout(1500);
   }
 
-  await autoLike(10, 3000);
+  console.log(`✅ Selesai AutoLike, total berhasil: ${count}`);
+}
 
   // =====================
   // 2. AUTO FOLLOW FOLLOWERS TARGET
