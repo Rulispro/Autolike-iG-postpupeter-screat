@@ -21,43 +21,80 @@ try {
 // =====================
 // 2. AutoLike (versi bookmarklet)
 // =====================
+
 async function autoLike(page, maxLikes = 10, interval = 3000) {
-  console.log(`🚀 Jalankan AutoLike mirip bookmarklet: target ${maxLikes} like`);
+  console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
-  await page.evaluate(
-    async (max, interval) => {
-      let delay = ms => new Promise(r => setTimeout(r, ms));
-      let count = 0;
-      let clicked = new Set();
+  // bikin delay sendiri
+  const delay = ms => new Promise(r => setTimeout(r, ms));
 
-      window.scrollTo(0, 0);
-      await delay(500);
+  let count = 0;
+  while (count < maxLikes) {
+    let clicked = false;
 
-      while (count < max) {
-        let btns = [...document.querySelectorAll('svg[aria-label="Suka"], svg[aria-label="Like"]')]
-          .map(svg => svg.closest('[role=button]'))
-          .filter(btn => btn && btn.offsetParent !== null && !clicked.has(btn));
+    // === 1. Coba pakai evaluate ===
+    try {
+      clicked = await page.evaluate(() => {
+        const svg = document.querySelector('svg[aria-label="Suka"], svg[aria-label="Like"]');
+        if (!svg) return false;
+        const btn = svg.closest('[role=button]');
+        if (!btn) return false;
+        btn.scrollIntoView({ behavior: "smooth", block: "center" });
+        btn.click();
+        return true;
+      });
 
-        if (btns.length === 0) {
-          window.scrollBy(0, 500);
-          await delay(500);
+      if (clicked) {
+        count++;
+        console.log(`❤️ (evaluate) Klik like ke-${count}`);
+        await delay(interval);
+        continue;
+      }
+    } catch (e) {
+      console.log("⚠️ Gagal pakai evaluate:", e.message);
+    }
+
+    // === 2. Coba pakai page.$ + click ===
+    try {
+      const btn = await page.$('svg[aria-label="Suka"], svg[aria-label="Like"]');
+      if (btn) {
+        const parent = await btn.evaluateHandle(el => el.closest('[role=button]'));
+        if (parent) {
+          await parent.click();
+          count++;
+          console.log(`❤️ (page.$.click) Klik like ke-${count}`);
+          await delay(interval);
           continue;
         }
-
-        let btn = btns[0];
-        clicked.add(btn);
-        btn.scrollIntoView({ behavior: "smooth" });
-        btn.click();
-        console.log("❤️ Klik love ke", ++count);
-
-        await delay(interval);
       }
-    },
-    maxLikes,
-    interval
-  );
+    } catch (e) {
+      console.log("⚠️ Gagal pakai page.$.click:", e.message);
+    }
 
-  console.log(`✅ AutoLike selesai`);
+    // === 3. Coba pakai touchscreen.tap ===
+    try {
+      const btn = await page.$('svg[aria-label="Suka"], svg[aria-label="Like"]');
+      if (btn) {
+        const box = await btn.boundingBox();
+        if (box) {
+          await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+          count++;
+          console.log(`❤️ (tap) Klik like ke-${count}`);
+          await delay(interval);
+          continue;
+        }
+      }
+    } catch (e) {
+      console.log("⚠️ Gagal pakai tap:", e.message);
+    }
+
+    // === kalau semua gagal → scroll ===
+    console.log("❌ Tidak ada tombol like ditemukan, scroll...");
+    await page.evaluate(() => window.scrollBy(0, 500));
+    await delay(1000);
+  }
+
+  console.log("✅ AutoLike selesai");
 }
 
 // =====================
