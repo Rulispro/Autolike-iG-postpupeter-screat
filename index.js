@@ -14,7 +14,7 @@ try {
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false, // biar bisa lihat popup
+    headless: true, // biar bisa lihat popup
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
