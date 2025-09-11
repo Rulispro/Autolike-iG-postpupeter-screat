@@ -67,64 +67,68 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
   const delay = ms => new Promise(r => setTimeout(r, ms));
 
   while (count < maxFollow) {
-    // Ambil semua tombol follow yang masih "Ikuti/Follow"
-    const btnHandles = await page.$$("button");
-    let targetBtn = null;
+    let clicked = false;
 
-    for (let btn of btnHandles) {
-      const text = await page.evaluate(el => el.innerText.trim(), btn);
-      if (["Ikuti", "Follow"].includes(text)) {
-        targetBtn = btn;
-        break; // ambil yang pertama ketemu
-      }
-    }
+    // cari tombol pertama di viewport
+    const btnHandle = await page.evaluateHandle(() => {
+      const buttons = Array.from(document.querySelectorAll("button"))
+        .filter(b => ["Ikuti", "Follow"].includes(b.innerText.trim()) && b.offsetParent !== null);
+      return buttons.length > 0 ? buttons[0] : null;
+    });
 
-    if (targetBtn) {
-      let clicked = false;
-
-      // 1️⃣ Klik biasa
+    if (btnHandle) {
       try {
-        await targetBtn.click();
+        await btnHandle.click();
         clicked = true;
-        console.log(`➕ (click) Follow ke-${count + 1}`);
-      } catch {}
-
-      // 2️⃣ Tap kalau klik gagal
-      if (!clicked) {
+        console.log(`➕ Follow ke-${count + 1} (click)`);
+      } catch {
+        // fallback tap
         try {
-          const box = await targetBtn.boundingBox();
+          const box = await btnHandle.boundingBox();
           if (box) {
             await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
             clicked = true;
-            console.log(`➕ (tap) Follow ke-${count + 1}`);
+            console.log(`➕ Follow ke-${count + 1} (tap)`);
           }
         } catch {}
       }
-
-      if (clicked) {
-        count++;
-        await delay(interval);
-        continue;
-      }
     }
 
-    // Kalau nggak ketemu tombol → scroll
+    if (clicked) {
+      count++;
+      await delay(interval);
+
+      // scroll sedikit supaya akun berikutnya naik
+      if (mode === "dialog") {
+        await page.evaluate(() => {
+          const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
+          if (dialog) dialog.scrollBy(0, 120); // scroll kecil
+        });
+      } else {
+        await page.evaluate(() => window.scrollBy(0, 120));
+      }
+
+      await delay(1000);
+      continue;
+    }
+
+    // kalau tidak ada tombol → scroll agak jauh
     if (mode === "dialog") {
       console.log("🔄 Scroll dialog cari tombol...");
       await page.evaluate(() => {
         const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-        if (dialog) dialog.scrollBy(0, 200);
+        if (dialog) dialog.scrollBy(0, 400);
       });
     } else {
       console.log("🔄 Scroll halaman cari tombol...");
       await page.evaluate(() => window.scrollBy(0, 400));
     }
-    await delay(2000);
+    await delay(1500);
   }
 
   console.log(`🎉 AutoFollow selesai, total follow: ${count}`);
-  }
-
+          }
+    
 
 // ======================
 // Main
