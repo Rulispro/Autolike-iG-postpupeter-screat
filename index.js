@@ -102,6 +102,7 @@ try {
 // =====================
 // 3. AutoFollow Function
 // =====================
+// 1. Buka profil dan buka dialog followers
 async function autoFollowFromTarget(page, username, total = 5, interval = 3000) {
   console.log(`🚀 Mulai AutoFollow dari @${username}, target ${total}`);
 
@@ -109,50 +110,94 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
     waitUntil: "networkidle2",
   });
 
-  // buka daftar followers
+  // klik followers
   await page.waitForSelector(`a[href="/${username}/followers/"]`);
   await page.click(`a[href="/${username}/followers/"]`);
 
-  // tunggu dialog followers muncul
+  // tunggu dialog muncul
   try {
     await page.waitForSelector('div[role="dialog"] ul', { timeout: 20000 });
+    console.log("✅ Dialog followers terbuka, mulai follow...");
   } catch {
     console.log("⚠️ Dialog followers tidak muncul, skip AutoFollow");
     return;
   }
 
+  // lanjutkan ke dialog handler
+  await autoFollowFromDialog(page, total, interval);
+}
+
+// 2. Klik tombol follow dalam dialog
+async function autoFollowFromDialog(page, maxFollow = 10, interval = 3000) {
+  console.log(`🚀 Mulai AutoFollow dari dialog followers, target ${maxFollow}`);
+
+  const delay = ms => new Promise(r => setTimeout(r, ms));
   let count = 0;
-  while (count < total) {
-    let followed = await page.evaluate(() => {
-      let dialog = document.querySelector('div[role="dialog"] ul');
-      if (!dialog) return false;
 
-      let btns = [...dialog.querySelectorAll("button")].filter(
-        b => b.innerText.trim() === "Ikuti"
-      );
+  while (count < maxFollow) {
+    let clicked = false;
 
-      if (btns.length > 0) {
-        btns[0].scrollIntoView({ behavior: "smooth" });
-        btns[0].click();
+    // === 1. Evaluate (mirip bookmarklet) ===
+    try {
+      clicked = await page.evaluate(() => {
+        const btn = [...document.querySelectorAll("button")]
+          .find(b => ["Follow", "Ikuti"].includes(b.innerText.trim()) && b.offsetParent !== null);
+        if (!btn) return false;
+        btn.scrollIntoView({ behavior: "smooth", block: "center" });
+        btn.click();
         return true;
-      }
-      return false;
-    });
-
-    if (followed) {
-      count++;
-      console.log(`➕ Follow ke-${count}`);
-    } else {
-      await page.evaluate(() => {
-        let dialog = document.querySelector('div[role="dialog"] ul');
-        if (dialog) dialog.scrollBy(0, 200);
       });
+      if (clicked) {
+        count++;
+        console.log(`➕ (evaluate) Follow ke-${count}`);
+        await delay(interval);
+        continue;
+      }
+    } catch (e) {
+      console.log("⚠️ Evaluate error:", e.message);
     }
 
-    await page.waitForTimeout(interval);
+    // === 2. page.$ + click ===
+    try {
+      const btn = await page.$x("//button[text()='Follow' or text()='Ikuti']");
+      if (btn.length > 0) {
+        await btn[0].click();
+        count++;
+        console.log(`➕ (page.$) Follow ke-${count}`);
+        await delay(interval);
+        continue;
+      }
+    } catch (e) {
+      console.log("⚠️ page.$ click error:", e.message);
+    }
+
+    // === 3. Tap fallback ===
+    try {
+      const btn = await page.$x("//button[text()='Follow' or text()='Ikuti']");
+      if (btn.length > 0) {
+        const box = await btn[0].boundingBox();
+        if (box) {
+          await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+          count++;
+          console.log(`➕ (tap) Follow ke-${count}`);
+          await delay(interval);
+          continue;
+        }
+      }
+    } catch (e) {
+      console.log("⚠️ Tap error:", e.message);
+    }
+
+    // === 4. Scroll dialog kalau tombol belum ada ===
+    console.log("❌ Tidak ada tombol follow ditemukan, scroll dialog...");
+    await page.evaluate(() => {
+      const dialog = document.querySelector('div[role="dialog"] ul');
+      if (dialog) dialog.scrollBy(0, 200);
+    });
+    await delay(1000);
   }
 
-  console.log(`✅ Selesai AutoFollow, total berhasil: ${count}`);
+  console.log("✅ AutoFollow selesai");
 }
 
 // =====================
