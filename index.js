@@ -21,100 +21,78 @@ try {
 // =====================
 // 2. AutoLike
 // =====================
-async function autoLike(page, maxLikes = 10, interval = 3000) {
-  console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
+//async function autoLike(page, maxLikes = 10, interval = 3000) {
+ // console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
-  const delay = ms => new Promise(r => setTimeout(r, ms));
+//  const delay = ms => new Promise(r => setTimeout(r, ms));
 
-  for (let i = 0; i < maxLikes; i++) {
-    let success = false;
-
+//  for (let i = 0; i < maxLikes; i++) {
+//    let success = false;
+//
     // === Puppeteer click ===
-    try {
-      const btnHandle = await page.$("svg[aria-label='Suka'], svg[aria-label='Like']");
-      if (btnHandle) {
-        const button = await btnHandle.evaluateHandle(el => el.closest("button,[role=button]"));
-        if (button) {
-          await button.click();
-          success = true;
-          console.log(`❤️ (puppeteer.click) Klik like ke-${i + 1}`);
-        }
-      }
-    } catch (e) {
-      console.log("⚠️ Puppeteer click error:", e.message);
-    }
+  //  try {
+   //   const btnHandle = await page.$("svg[aria-label='Suka'], svg[aria-label='Like']");
+  //    if (btnHandle) {
+    //    const button = await btnHandle.evaluateHandle(el => el.closest("button,[role=button]"));
+    //    if (button) {
+   //       await button.click();
+     //     success = true;
+   //       console.log(`❤️ (puppeteer.click) Klik like ke-${i + 1}`);
+   //     }
+   //   }
+  //  } catch (e) {
+ //     console.log("⚠️ Puppeteer click error:", e.message);
+  //  }
 
     // === Touchscreen tap ===
-    if (!success) {
-      try {
-        const btnHandle = await page.$("svg[aria-label='Suka'], svg[aria-label='Like']");
-        if (btnHandle) {
-          const box = await btnHandle.boundingBox();
-          if (box) {
-            await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-            success = true;
-            console.log(`❤️ (tap) Klik like ke-${i + 1}`);
-          }
-        }
-      } catch (e) {
-        console.log("⚠️ Tap error:", e.message);
-      }
-    }
+  //  if (!success) {
+    //  try {
+    //    const btnHandle = await page.$("svg[aria-label='Suka'], svg[aria-label='Like']");
+    //    if (btnHandle) {
+    //      const box = await btnHandle.boundingBox();
+    //      if (box) {
+    //        await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+     //       success = true;
+    //        console.log(`❤️ (tap) Klik like ke-${i + 1}`);
+    //      }
+   //     }
+  //   } catch (e) {
+   //     console.log("⚠️ Tap error:", e.message);
+   //   }
+ //   }
 
     // === Kalau gagal total → scroll cari postingan baru ===
-    if (!success) {
-      console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
-      await page.evaluate(() => window.scrollBy(0, 500));
-      await delay(2000);
-      continue;
-    }
+  //  if (!success) {
+  //    console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
+   //   await page.evaluate(() => window.scrollBy(0, 500));
+  //    await delay(2000);
+   //   continue;
+ //   }
 
     // Delay antar klik
-    await delay(interval);
+  ///  await delay(interval);
 
     // Scroll setelah klik supaya muncul postingan berikutnya
-    await page.evaluate(() => window.scrollBy(0, 400));
-    await delay(1500);
-  }
-
-  console.log("✅ AutoLike selesai");
-}
+ //   await page.evaluate(() => window.scrollBy(0, 400));
+ //   await delay(1500);
+//  }
+//console.log("✅ AutoLike selesai");
+//}
 
 // =====================
-// 3. Klik followers (versi kuat)
+
 // =====================
-async function clickFollowersLink(page) {
-  let found = null;
-
-  // 1️⃣ Cari dengan XPath teks Followers/Pengikut
-  const xpaths = [
-    "//a[contains(., 'Followers')]",
-    "//a[contains(., 'Pengikut')]",
-    "//span[contains(text(),'Followers')]/ancestor::a",
-    "//span[contains(text(),'Pengikut')]/ancestor::a"
-  ];
-
-  for (const xp of xpaths) {
-    const els = await page.$x(xp);
-    if (els.length > 0) {
-      found = els[0];
-      console.log(`✅ Link followers ketemu pakai XPath: ${xp}`);
-      break;
-    }
-  }
-
-  // 2️⃣ Kalau masih gagal, coba selector umum
+// 3. Klik followers dengan 3 cara
+// =====================
+async function clickFollowersLink(page, username) {
+  const selector = `a[href="/${username}/followers/"]`;
+  const found = await page.$(selector);
   if (!found) {
-    found = await page.$('a[href$="/followers/"]');
-    if (found) console.log("✅ Link followers ketemu pakai href selector");
-  }
-
-  if (!found) {
-    console.log("❌ Link followers tidak ketemu di halaman profil");
+    console.log("❌ Link followers tidak ketemu");
     return false;
   }
 
-  // Klik pakai 3 cara
+  // 1️⃣ Tap
   try {
     const box = await found.boundingBox();
     if (box) {
@@ -124,15 +102,24 @@ async function clickFollowersLink(page) {
     }
   } catch {}
 
+  // 2️⃣ dispatchEvent
   try {
-    await page.evaluate(el => {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    }, found);
-    console.log("✅ Followers link diklik (dispatchEvent)");
-    return true;
+    const ok = await page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        return true;
+      }
+      return false;
+    }, selector);
+    if (ok) {
+      console.log("✅ Followers link diklik (dispatchEvent)");
+      return true;
+    }
   } catch {}
 
+  // 3️⃣ Klik biasa
   try {
     await found.click();
     console.log("✅ Followers link diklik (.click)");
