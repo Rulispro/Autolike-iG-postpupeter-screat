@@ -152,6 +152,10 @@ async function clickFollowersLink(page, username) {
 // =====================
 // 4. AutoFollow Function
 // =====================
+
+// =====================
+// 4. AutoFollow Function (versi fix desktop & mobile)
+// =====================
 async function autoFollowFromTarget(page, username, total = 5, interval = 3000) {
   console.log(`🚀 Mulai AutoFollow dari @${username}, target ${total}`);
 
@@ -163,12 +167,21 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
   const ok = await clickFollowersLink(page, username);
   if (!ok) return;
 
+  // === Handle Desktop (dialog) vs Mobile (halaman baru) ===
+  let isDialog = false;
   try {
-    await page.waitForSelector('div[role="dialog"] ul', { timeout: 20000 });
-    console.log("✅ Dialog followers muncul");
+    await page.waitForSelector('div[role="dialog"] ul, div._aano ul', { timeout: 8000 });
+    console.log("✅ Mode Desktop: dialog followers muncul");
+    isDialog = true;
   } catch {
-    console.log("⚠️ Dialog followers tidak muncul");
-    return;
+    // cek kalau dia pindah ke halaman /followers/
+    await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 8000 }).catch(() => {});
+    if (page.url().includes("/followers")) {
+      console.log("✅ Mode Mobile: halaman followers terbuka");
+    } else {
+      console.log("❌ Gagal buka daftar followers");
+      return;
+    }
   }
 
   const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -195,7 +208,7 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
       }
     } catch {}
 
-    // === 2. page.$ + click ===
+    // === 2. page.$x + click ===
     try {
       const btn = await page.$x("//button[text()='Follow' or text()='Ikuti']");
       if (btn.length > 0) {
@@ -222,11 +235,17 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
       }
     } catch {}
 
-    console.log("❌ Tidak ada tombol follow, scroll dialog...");
-    await page.evaluate(() => {
-      const dialog = document.querySelector('div[role="dialog"] ul');
-      if (dialog) dialog.scrollBy(0, 200);
-    });
+    // === Scroll jika tidak ada tombol follow ===
+    if (isDialog) {
+      console.log("❌ Tidak ada tombol follow, scroll dialog...");
+      await page.evaluate(() => {
+        const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
+        if (dialog) dialog.scrollBy(0, 200);
+      });
+    } else {
+      console.log("❌ Tidak ada tombol follow, scroll halaman...");
+      await page.evaluate(() => window.scrollBy(0, 500));
+    }
     await delay(1000);
   }
 
