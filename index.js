@@ -30,7 +30,7 @@ async function openFollowers(page, username) {
 
   try {
     await page.waitForSelector(`a[href="/${username}/followers/"]`, { timeout: 8000 });
-    await page.click(`a[href="/${username}/followers/"]`);
+    await page.click(`a[href="/${username}/following/"]`);
     console.log("✅ Link followers diklik");
     await delay(2500); // tunggu biar daftar followers kebuka
   } catch (e) {
