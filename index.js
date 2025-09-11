@@ -26,6 +26,11 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
   const delay = ms => new Promise(r => setTimeout(r, ms));
   let count = 0;
+  // Debug: cek semua svg di halaman
+const labels = await page.evaluate(() =>
+  [...document.querySelectorAll("svg")].map(el => el.getAttribute("aria-label"))
+);
+console.log("🔎 Semua aria-label ditemukan:", labels.filter(Boolean));
 
   // multi bahasa biar aman
   const likeSelector = [
