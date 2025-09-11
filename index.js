@@ -67,7 +67,8 @@ try {
     if (!dialog) return [];
     return Array.from(dialog.querySelectorAll("*")).map(el => ({
       tag: el.tagName,
-      text: el.innerText.trim(),
+      text: el.innerText ? el.innerText.trim() : ''
+
       class: el.className,
       html: el.outerHTML
     }));
