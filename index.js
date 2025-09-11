@@ -1,14 +1,8 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 
-// ======================
-// Helper Delay
-// ======================
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
-// ======================
-// Load Cookies
-// ======================
 let cookies = [];
 try {
   const raw = fs.readFileSync("./cookies.json", "utf8");
@@ -19,9 +13,7 @@ try {
   process.exit(1);
 }
 
-// ======================
-// Open Following
-// ======================
+// buka daftar following
 async function openFollowing(page, username) {
   console.log(`🚀 Buka profil @${username}`);
   await page.goto(`https://www.instagram.com/${username}/`, {
@@ -32,71 +24,66 @@ async function openFollowing(page, username) {
     await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
     await page.click(`a[href="/${username}/following/"]`);
     console.log("✅ Link following diklik");
-    await delay(3000); // jeda 3 detik biar daftar kebuka
+    await delay(3000);
   } catch (e) {
     console.log("❌ Link following tidak ditemukan:", e.message);
     return false;
   }
 
-  // Cek desktop (dialog)
   const isDialog = await page.$('div[role="dialog"] ul, div._aano ul');
   if (isDialog) {
     console.log("✅ Mode Desktop: dialog following muncul");
     return "dialog";
   }
-
-  // Cek mobile (halaman /following)
   if (page.url().includes("/following")) {
     console.log("✅ Mode Mobile: halaman following terbuka");
     return "page";
   }
-
-  console.log("❌ Gagal buka daftar following");
   return false;
 }
 
-// ======================
-// AutoFollow
-// ======================
-async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
+// unfollow loop
+async function autoUnfollow(page, username, maxUnfollow = 5, interval = 3000) {
   const mode = await openFollowing(page, username);
   if (!mode) return;
 
   let count = 0;
 
-  while (count < maxFollow) {
+  while (count < maxUnfollow) {
     let clicked = false;
 
-    // cari tombol pertama di viewport
+    // cari tombol "Diikuti" / "Following"
     const btnHandle = await page.evaluateHandle(() => {
       const buttons = Array.from(document.querySelectorAll("button"))
-        .filter(b => ["Ikuti", "Follow"].includes(b.innerText.trim()) && b.offsetParent !== null);
+        .filter(b => /Diikuti|Following/i.test(b.innerText.trim()) && b.offsetParent !== null);
       return buttons.length > 0 ? buttons[0] : null;
     });
 
     if (btnHandle) {
       try {
         await btnHandle.click();
-        clicked = true;
-        console.log(`➕ Follow ke-${count + 1} (click)`);
-      } catch {
-        // fallback tap
-        try {
-          const box = await btnHandle.boundingBox();
-          if (box) {
-            await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-            clicked = true;
-            console.log(`➕ Follow ke-${count + 1} (tap)`);
-          }
-        } catch {}
-      }
+        console.log(`🔘 Klik Diikuti ke-${count + 1}`);
+        await delay(1000);
+
+        // cari tombol konfirmasi "Unfollow" / "Batal Mengikuti"
+        const confirmBtn = await page.evaluateHandle(() => {
+          return Array.from(document.querySelectorAll("button"))
+            .find(b => /Batal Mengikuti|Unfollow/i.test(b.innerText));
+        });
+
+        if (confirmBtn) {
+          await confirmBtn.click();
+          console.log(`❌ Unfollow ke-${count + 1}`);
+          clicked = true;
+        }
+      } catch {}
     }
 
     if (clicked) {
       count++;
       await delay(interval);
 
-      // scroll sedikit supaya akun berikutnya naik
+      // scroll biar akun baru masuk viewport
       if (mode === "dialog") {
         await page.evaluate(() => {
           const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
@@ -105,12 +92,11 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
       } else {
         await page.evaluate(() => window.scrollBy(0, 120));
       }
-
       await delay(1000);
       continue;
     }
 
-    // kalau tidak ada tombol → scroll agak jauh
+    // kalau tidak ada tombol → scroll jauh
     if (mode === "dialog") {
       console.log("🔄 Scroll dialog cari tombol...");
       await page.evaluate(() => {
@@ -124,29 +110,22 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
     await delay(1500);
   }
 
-  console.log(`🎉 AutoFollow selesai, total follow: ${count}`);
+  console.log(`🎉 AutoUnfollow selesai, total: ${count}`);
 }
 
-// ======================
-// Main
-// ======================
 (async () => {
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
-
   const page = await browser.newPage();
 
-  // Set cookies
   await page.setCookie(...cookies);
 
-  // Buka Instagram
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
   console.log("✅ Login berhasil dengan cookies");
 
-  // Jalankan auto follow target dari daftar following
-  await autoFollow(page, "zayrahijab", 5, 3000); // follow 5 orang, jeda 3 detik
+  await autoUnfollow(page, "zayrahijab", 5, 3000);
 
   await browser.close();
 })();
