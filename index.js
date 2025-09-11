@@ -97,21 +97,33 @@ async function autoUnfollow(page, limit = 10, interval = 3000) {
       }
 
       // cari tombol konfirmasi "Batal Mengikuti / Unfollow"
-      const confirmBtn = await page.evaluateHandle(() => {
-        const btns = Array.from(document.querySelectorAll("button"));
-        return btns.find((b) =>
-          /Batal Mengikuti|Unfollow/i.test(b.innerText.trim())
-        );
-      });
+   //   const confirmBtn = await page.evaluateHandle(() => {
+      //  const btns = Array.from(document.querySelectorAll("button"));
+     //   return btns.find((b) =>
+    //      /Batal Mengikuti|Unfollow/i.test(b.innerText.trim())
+   //     );
+ //     });
 
-      if (confirmBtn) {
-        await confirmBtn.click();
-        console.log(`❌ Unfollow ke-${count + 1}`);
-        count++;
-      } else {
-        console.log("⚠️ Tombol 'Batal Mengikuti' tidak ditemukan, skip akun ini");
-      }
+ //     if (confirmBtn) {
+  //      await confirmBtn.click();
+   //     console.log(`❌ Unfollow ke-${count + 1}`);
+   //     count++;
+ //     } else {
+   //     console.log("⚠️ Tombol 'Batal Mengikuti' tidak ditemukan, skip akun ini");
+  //    }
+// cari tombol konfirmasi "Batal Mengikuti / Unfollow"
+const confirmBtns = await page.$x(
+  "//button[contains(text(),'Batal Mengikuti') or contains(text(),'Unfollow')]"
+);
 
+if (confirmBtns.length > 0) {
+  await confirmBtns[0].click();
+  console.log(`❌ Unfollow ke-${count + 1}`);
+  count++;
+} else {
+  console.log("⚠️ Tombol 'Batal Mengikuti' tidak ditemukan, skip akun ini");
+}
+      
       // jeda sebelum lanjut
       await delay(interval);
 
