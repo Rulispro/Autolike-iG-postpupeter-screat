@@ -12,105 +12,69 @@ try {
   process.exit(1);
 }
 
-async function autoUnfollow(page, username, limit = 5, interval = 3000) {
-  console.log(`🚀 Buka profil @${username}`);
-  await page.goto(`https://www.instagram.com/${username}/`, { waitUntil: "networkidle2" });
-
-  // Buka daftar following
-  try {
-    await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
-    await page.click(`a[href="/${username}/following/"]`);
-    console.log("✅ Link following diklik");
-    await delay(3000);
-  } catch (e) {
-    console.log("❌ Link following tidak ditemukan:", e.message);
-    return;
-  }
-
-  let count = 0;
-  while (count < limit) {
-    // 1️⃣ ambil tombol "Diikuti"
-    const targetBtnHandle = await page.evaluateHandle(() => {
-      const buttons = Array.from(document.querySelectorAll("button"));
-      return buttons.find(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null) || null;
-    });
-
-    const targetBtn = targetBtnHandle.asElement();
-    if (!targetBtn) {
-      console.log("⚠️ Tidak ada tombol 'Diikuti' ditemukan, scroll...");
-      await page.evaluate(() => window.scrollBy(0, 300));
-      await delay(1500);
-      continue;
-    }
-
-    // klik tombol "Diikuti"
-    try {
-      await targetBtn.click();
-      console.log(`🔘 Klik Diikuti ke-${count + 1}`);
-    } catch {
-      try {
-        const box = await targetBtn.boundingBox();
-        if (box) {
-          await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-          console.log(`🔘 Tap Diikuti ke-${count + 1}`);
-        }
-      } catch {}
-    }
-
-    await delay(1500);
-
-    // 2️⃣ cek popup / konfirmasi
-    const confirmClicked = await page.evaluate(() => {
-      const dialog = document.querySelector('div[role="dialog"]');
-      if (!dialog) return false;
-      const btn = Array.from(dialog.querySelectorAll("button"))
-        .find(b => /Batal Mengikuti|Unfollow/i.test(b.innerText));
-      if (btn) { btn.click(); return true; }
-      return false;
-    });
-
-    if (confirmClicked) {
-      console.log(`❌ Unfollow ke-${count + 1} (popup)`);
-      count++;
-    } else {
-      // 3️⃣ cek apakah tombol berubah jadi "Ikuti"
-      const stillFollowing = await page.evaluate(el => el.innerText, targetBtn).catch(() => "");
-      if (/Ikuti|Follow/i.test(stillFollowing)) {
-        console.log(`✅ Unfollow ke-${count + 1} (langsung tanpa popup)`);
-        count++;
-      } else {
-        console.log("⚠️ Tombol konfirmasi tidak muncul & status tidak berubah, skip akun ini");
-      }
-    }
-
-    await delay(interval);
-    await page.evaluate(() => window.scrollBy(0, 150));
-  }
-
-  console.log(`🎉 Selesai unfollow ${count} akun`);
-}
-
-// ======================
-// Main
-// ======================
 (async () => {
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false, // biar bisa lihat popup
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
 
-  // Mode mobile
+  // Mobile mode
   await page.setUserAgent(
     "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
   );
   await page.setViewport({ width: 412, height: 915 });
 
   await page.setCookie(...cookies);
-  await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
-  console.log("✅ Login berhasil");
+  await page.goto("https://www.instagram.com/zayrahijab/", { waitUntil: "networkidle2" });
+  console.log("✅ Halaman profil terbuka");
 
-  await autoUnfollow(page, "zayrahijab", 5, 3000);
+  await delay(3000);
+
+  // Klik tombol "Diikuti" pertama
+  const diikutiBtn = await page.evaluateHandle(() => {
+    const btns = Array.from(document.querySelectorAll("button"));
+    return btns.find(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null);
+  });
+
+  if (!diikutiBtn) {
+    console.log("⚠️ Tombol 'Diikuti' tidak ditemukan");
+    await browser.close();
+    return;
+  }
+
+  // Klik tombol
+  try {
+    await diikutiBtn.click();
+    console.log("🔘 Tombol 'Diikuti' diklik");
+  } catch {
+    try {
+      const box = await diikutiBtn.boundingBox();
+      if (box) {
+        await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+        console.log("🔘 Tombol 'Diikuti' di-tap");
+      }
+    } catch {}
+  }
+
+  await delay(1500);
+
+  // DEBUG: tampilkan semua tombol di popup / dialog
+  const popupButtons = await page.evaluate(() => {
+    const dialog = document.querySelector('div[role="dialog"]');
+    if (!dialog) return [];
+    return Array.from(dialog.querySelectorAll("button")).map(b => ({
+      text: b.innerText,
+      html: b.outerHTML
+    }));
+  });
+
+  if (popupButtons.length === 0) {
+    console.log("⚠️ Tidak ada tombol di popup");
+  } else {
+    console.log("✅ Tombol di popup:");
+    popupButtons.forEach((b, i) => console.log(`${i + 1}:`, b.text, b.html));
+  }
 
   await browser.close();
 })();
