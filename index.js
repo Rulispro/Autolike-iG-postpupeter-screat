@@ -150,6 +150,70 @@ async function clickFollowersLink(page, username) {
 }
 
 // =====================
+// 3. Klik followers dengan 3 cara (update)
+// =====================
+async function clickFollowersLink(page, username) {
+  let selectorList = [
+    `a[href="/${username}/followers/"]`,
+    'a[href$="/followers/"]',
+    'a[href*="followers"]',
+    'a:has(span:contains("Pengikut"))',
+    'a:has(span:contains("Followers"))'
+  ];
+
+  let found = null;
+  for (const sel of selectorList) {
+    found = await page.$(sel).catch(() => null);
+    if (found) {
+      console.log(`✅ Link followers ketemu pakai selector: ${sel}`);
+      break;
+    }
+  }
+
+  if (!found) {
+    console.log("❌ Link followers tidak ketemu di halaman profil");
+    return false;
+  }
+
+  // 1️⃣ Tap
+  try {
+    const box = await found.boundingBox();
+    if (box) {
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      console.log("✅ Followers link ditekan (tap)");
+      return true;
+    }
+  } catch {}
+
+  // 2️⃣ dispatchEvent
+  try {
+    const ok = await page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        return true;
+      }
+      return false;
+    }, selectorList[0]);
+    if (ok) {
+      console.log("✅ Followers link diklik (dispatchEvent)");
+      return true;
+    }
+  } catch {}
+
+  // 3️⃣ Klik biasa
+  try {
+    await found.click();
+    console.log("✅ Followers link diklik (.click)");
+    return true;
+  } catch {}
+
+  console.log("❌ Semua metode klik followers gagal");
+  return false;
+}
+
+// =====================
 // 4. AutoFollow Function
 // =====================
 
