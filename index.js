@@ -20,51 +20,49 @@ try {
 }
 
 // ======================
-// Open Followers
+// Open Following
 // ======================
-async function openFollowers(page, username) {
+async function openFollowing(page, username) {
   console.log(`🚀 Buka profil @${username}`);
   await page.goto(`https://www.instagram.com/${username}/`, {
     waitUntil: "networkidle2",
   });
 
   try {
-    await page.waitForSelector(`a[href="/${username}/followers/"]`, { timeout: 8000 });
+    await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
     await page.click(`a[href="/${username}/following/"]`);
-    console.log("✅ Link followers diklik");
-    await delay(2500); // tunggu biar daftar followers kebuka
+    console.log("✅ Link following diklik");
+    await delay(3000); // jeda 3 detik biar daftar kebuka
   } catch (e) {
-    console.log("❌ Link followers tidak ditemukan:", e.message);
+    console.log("❌ Link following tidak ditemukan:", e.message);
     return false;
   }
 
   // Cek desktop (dialog)
   const isDialog = await page.$('div[role="dialog"] ul, div._aano ul');
   if (isDialog) {
-    console.log("✅ Mode Desktop: dialog followers muncul");
+    console.log("✅ Mode Desktop: dialog following muncul");
     return "dialog";
   }
 
-  // Cek mobile (halaman /followers/)
-  if (page.url().includes("/followers")) {
-    console.log("✅ Mode Mobile: halaman followers terbuka");
+  // Cek mobile (halaman /following)
+  if (page.url().includes("/following")) {
+    console.log("✅ Mode Mobile: halaman following terbuka");
     return "page";
   }
 
-  console.log("❌ Gagal buka daftar followers");
+  console.log("❌ Gagal buka daftar following");
   return false;
 }
 
 // ======================
 // AutoFollow
 // ======================
-
 async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
-  const mode = await openFollowers(page, username);
+  const mode = await openFollowing(page, username);
   if (!mode) return;
 
   let count = 0;
-  const delay = ms => new Promise(r => setTimeout(r, ms));
 
   while (count < maxFollow) {
     let clicked = false;
@@ -102,7 +100,7 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
       if (mode === "dialog") {
         await page.evaluate(() => {
           const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-          if (dialog) dialog.scrollBy(0, 120); // scroll kecil
+          if (dialog) dialog.scrollBy(0, 120);
         });
       } else {
         await page.evaluate(() => window.scrollBy(0, 120));
@@ -127,8 +125,7 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
   }
 
   console.log(`🎉 AutoFollow selesai, total follow: ${count}`);
-          }
-    
+}
 
 // ======================
 // Main
@@ -148,7 +145,7 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
   console.log("✅ Login berhasil dengan cookies");
 
-  // Jalankan auto follow target
+  // Jalankan auto follow target dari daftar following
   await autoFollow(page, "zayrahijab", 5, 3000); // follow 5 orang, jeda 3 detik
 
   await browser.close();
