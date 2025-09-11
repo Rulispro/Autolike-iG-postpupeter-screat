@@ -66,12 +66,12 @@ try {
     const dialog = document.querySelector('div[role="dialog"]');
     if (!dialog) return [];
     return Array.from(dialog.querySelectorAll("*")).map(el => ({
-    {
+    
   tag: el.tagName,
   text: (el.innerText || '').trim(),
   className: el.className,
   html: el.outerHTML
-}
+
 
     }));
   });
