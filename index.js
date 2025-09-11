@@ -28,23 +28,23 @@ try {
   for (let i = 0; i < maxLikes; i++) {
     let success = false;
 
-    // === 1. Evaluate click ===
-    try {
-      success = await page.evaluate(() => {
-        const svg = document.querySelector("svg[aria-label='Suka'], svg[aria-label='Like']");
-        if (!svg) return false;
-        const btn = svg.closest("button,[role=button]");
-        if (!btn) return false;
-        btn.scrollIntoView({ behavior: "smooth", block: "center" });
-        btn.click();
-        return true;
-      });
-      if (success) {
-        console.log(`❤️ (evaluate) Klik like ke-${i + 1}`);
-      }
-    } catch (e) {
-      console.log("⚠️ Evaluate error:", e.message);
-    }
+ //   // === 1. Evaluate click ===
+  //  try {
+     // success = await page.evaluate(() => {
+       // const svg = document.querySelector("svg[aria-label='Suka'], svg[aria-label='Like']");
+     //   if (!svg) return false;
+      //  const btn = svg.closest("button,[role=button]");
+     //   if (!btn) return false;
+      //  btn.scrollIntoView({ behavior: "smooth", block: "center" });
+      //  btn.click();
+      //  return true;
+    //  });
+    //  if (success) {
+    //    console.log(`❤️ (evaluate) Klik like ke-${i + 1}`);
+  //    }
+  //  } catch (e) {
+   //   console.log("⚠️ Evaluate error:", e.message);
+ //   }
 
     // === 2. Puppeteer click ===
     if (!success) {
@@ -187,7 +187,7 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
   await autoLike(page, 10, 3000);
 
   // Jalankan AutoFollow (contoh target: instagram)
-  await autoFollowFromTarget(page, "instagram", 5, 3000);
+  await autoFollowFromTarget(page, "zayrahijab", 5, 3000);
 
   console.log("🎉 Semua tugas selesai");
   await browser.close();
