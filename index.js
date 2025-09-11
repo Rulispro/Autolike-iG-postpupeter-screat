@@ -100,66 +100,137 @@ try {
 }
 
 // =====================
-// 3. AutoFollow Function
 // =====================
+// 3. Klik followers dengan 3 cara
+// =====================
+async function clickFollowersLink(page, username) {
+  const selector = `a[href="/${username}/followers/"]`;
+  const found = await page.$(selector);
+  if (!found) {
+    console.log("❌ Link followers tidak ketemu");
+    return false;
+  }
 
-async function autoFollowFromTarget(page, username, maxFollow = 10, delay = 2000) {
-  console.log(`🚀 Mulai AutoFollow dari @${username}, target ${maxFollow}`);
+  // 1️⃣ Tap
+  try {
+    const box = await found.boundingBox();
+    if (box) {
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      console.log("✅ Followers link ditekan (tap)");
+      return true;
+    }
+  } catch {}
 
-  // 1. Buka halaman profil target
+  // 2️⃣ dispatchEvent
+  try {
+    const ok = await page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        return true;
+      }
+      return false;
+    }, selector);
+    if (ok) {
+      console.log("✅ Followers link diklik (dispatchEvent)");
+      return true;
+    }
+  } catch {}
+
+  // 3️⃣ Klik biasa
+  try {
+    await found.click();
+    console.log("✅ Followers link diklik (.click)");
+    return true;
+  } catch {}
+
+  console.log("❌ Semua metode klik followers gagal");
+  return false;
+}
+
+// =====================
+// 4. AutoFollow Function
+// =====================
+async function autoFollowFromTarget(page, username, total = 5, interval = 3000) {
+  console.log(`🚀 Mulai AutoFollow dari @${username}, target ${total}`);
+
   await page.goto(`https://www.instagram.com/${username}/`, {
     waitUntil: "networkidle2",
-    timeout: 60000
   });
   console.log("✅ Halaman profil terbuka");
 
-  // 2. Log semua link untuk debug
-  const links = await page.evaluate(() =>
-    [...document.querySelectorAll("a")].map(a => a.getAttribute("href"))
-  );
-  console.log("🔎 Semua link di profil:", links);
+  const ok = await clickFollowersLink(page, username);
+  if (!ok) return;
 
-  // 3. Cari link followers yang benar
-  const found = await page.evaluateHandle((username) => {
-    return [...document.querySelectorAll("a")]
-      .find(a => a.getAttribute("href")?.includes(`/${username}/followers`));
-  }, username);
-
-  if (!found) {
-    console.log("❌ Link followers tidak ditemukan");
+  try {
+    await page.waitForSelector('div[role="dialog"] ul', { timeout: 20000 });
+    console.log("✅ Dialog followers muncul");
+  } catch {
+    console.log("⚠️ Dialog followers tidak muncul");
     return;
   }
 
-  // 4. Klik link followers
-  await page.evaluate(el => el.click(), found);
-  console.log("✅ Klik link followers berhasil");
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+  let count = 0;
 
-  // 5. Screenshot setelah klik (buat bukti dialog kebuka/tidak)
-  await page.screenshot({ path: "after-click-followers.png", fullPage: true });
-  console.log("📸 Screenshot after-click-followers.png diambil");
+  while (count < total) {
+    let clicked = false;
 
-  // 6. Tunggu dialog muncul
-  await page.waitForSelector('div[role="dialog"]', { timeout: 15000 })
-    .catch(() => console.log("⚠️ Dialog followers tidak muncul"));
+    // === 1. Evaluate ===
+    try {
+      clicked = await page.evaluate(() => {
+        const btn = [...document.querySelectorAll("button")]
+          .find(b => ["Ikuti", "Follow"].includes(b.innerText.trim()) && b.offsetParent !== null);
+        if (!btn) return false;
+        btn.scrollIntoView({ behavior: "smooth", block: "center" });
+        btn.click();
+        return true;
+      });
+      if (clicked) {
+        count++;
+        console.log(`➕ (evaluate) Follow ke-${count}`);
+        await delay(interval);
+        continue;
+      }
+    } catch {}
 
-  // 7. Cari tombol Follow
-  const followButtons = await page.$$('div[role="dialog"] button');
-  console.log(`🔎 Jumlah tombol follow ditemukan: ${followButtons.length}`);
+    // === 2. page.$ + click ===
+    try {
+      const btn = await page.$x("//button[text()='Follow' or text()='Ikuti']");
+      if (btn.length > 0) {
+        await btn[0].click();
+        count++;
+        console.log(`➕ (page.$) Follow ke-${count}`);
+        await delay(interval);
+        continue;
+      }
+    } catch {}
 
-  let followed = 0;
-  for (let btn of followButtons) {
-    if (followed >= maxFollow) break;
+    // === 3. Tap ===
+    try {
+      const btn = await page.$x("//button[text()='Follow' or text()='Ikuti']");
+      if (btn.length > 0) {
+        const box = await btn[0].boundingBox();
+        if (box) {
+          await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+          count++;
+          console.log(`➕ (tap) Follow ke-${count}`);
+          await delay(interval);
+          continue;
+        }
+      }
+    } catch {}
 
-    const text = await page.evaluate(el => el.innerText, btn);
-    if (text === "Follow" || text === "Ikuti") {
-      await btn.click();
-      followed++;
-      console.log(`➕ Follow akun ke-${followed}`);
-      await page.waitForTimeout(delay);
-    }
+    console.log("❌ Tidak ada tombol follow, scroll dialog...");
+    await page.evaluate(() => {
+      const dialog = document.querySelector('div[role="dialog"] ul');
+      if (dialog) dialog.scrollBy(0, 200);
+    });
+    await delay(1000);
   }
 
-  console.log(`✅ AutoFollow selesai, total follow: ${followed}`);
+  console.log(`✅ AutoFollow selesai, total follow: ${count}`);
 }
 
 // =====================
