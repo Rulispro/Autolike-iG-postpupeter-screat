@@ -19,9 +19,8 @@ try {
 }
 
 // =====================
-// 2. AutoLike (versi bookmarklet)
+// 2. AutoLike (bookmarklet style)
 // =====================
-
 async function autoLike(page, maxLikes = 10, interval = 3000) {
   console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
@@ -105,7 +104,6 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   console.log("✅ AutoLike selesai");
 }
 
-
 // =====================
 // 3. AutoFollow Function
 // =====================
@@ -172,11 +170,23 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
   });
 
   const page = await browser.newPage();
+
+  // === SET MOBILE MODE + BAHASA ===
+  await page.setUserAgent(
+    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
+  );
+  await page.setViewport({ width: 412, height: 915 });
+  await page.setExtraHTTPHeaders({
+    "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+  });
+
   await page.setCookie(...cookies);
 
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
-
   console.log("✅ Login dengan cookies berhasil");
+
+  console.log("URL sekarang:", page.url());
+  await page.screenshot({ path: "debug.png", fullPage: true });
 
   // Jalankan AutoLike
   await autoLike(page, 10, 3000);
