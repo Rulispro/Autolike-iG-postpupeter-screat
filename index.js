@@ -58,23 +58,28 @@ async function openFollowers(page, username) {
 // ======================
 // AutoFollow
 // ======================
+
 async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
   const mode = await openFollowers(page, username);
   if (!mode) return;
 
   let count = 0;
   while (count < maxFollow) {
-    const btn = await page.$x("//button[text()='Ikuti' or text()='Follow']");
-    if (btn.length > 0) {
-      try {
-        await btn[0].click();
-        count++;
-        console.log(`➕ Follow ke-${count}`);
-        await delay(interval); // jeda antar follow
-        continue;
-      } catch (e) {
-        console.log("⚠️ Klik follow gagal:", e.message);
+    // Cari tombol follow/ikuti via evaluate
+    const clicked = await page.evaluate(() => {
+      const btn = document.querySelector("button:contains('Ikuti'), button:contains('Follow')");
+      if (btn) {
+        btn.click();
+        return true;
       }
+      return false;
+    });
+
+    if (clicked) {
+      count++;
+      console.log(`➕ Follow ke-${count}`);
+      await delay(interval); // jeda antar follow
+      continue;
     }
 
     // Scroll kalau tombol tidak ada
