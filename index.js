@@ -260,7 +260,7 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
 //  await autoLike(page, 10, 3000);
 
   // Jalankan AutoFollow (contoh target: instagram)
-  await autoFollowFromTarget(page, "zayrahijab", 5, 3000);
+//  await autoFollowFromTarget(page, "zayrahijab", 5, 3000);
 
   console.log("🎉 Semua tugas selesai");
   await browser.close();
