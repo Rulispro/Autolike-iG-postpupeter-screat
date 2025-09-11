@@ -14,7 +14,7 @@ try {
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false, // ganti ke true kalau tidak mau lihat browser
+    headless: true, // ganti ke true kalau tidak mau lihat browser
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
