@@ -28,7 +28,7 @@ try {
   await page.setCookie(...cookies);
 
   // Buka profil target
-  const profileUrl = "https://www.instagram.com/zayrahijab/";
+  const profileUrl = "https://www.instagram.com/sendy81a/";
   await page.goto(profileUrl, { waitUntil: "networkidle2" });
   console.log("✅ Halaman profil terbuka");
 
