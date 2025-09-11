@@ -67,67 +67,64 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
   const delay = ms => new Promise(r => setTimeout(r, ms));
 
   while (count < maxFollow) {
-    let clicked = false;
+    // Ambil semua tombol follow yang masih "Ikuti/Follow"
+    const btnHandles = await page.$$("button");
+    let targetBtn = null;
 
-    // 1️⃣ Klik biasa di dalam evaluate
-    try {
-      clicked = await page.evaluate(() => {
-        const btn = Array.from(document.querySelectorAll("button"))
-          .find(b => ["Ikuti", "Follow"].includes(b.innerText.trim()) && b.offsetParent !== null);
-        if (btn) {
-          btn.scrollIntoView({ behavior: "smooth", block: "center" });
-          btn.click();
-          return true;
-        }
-        return false;
-      });
+    for (let btn of btnHandles) {
+      const text = await page.evaluate(el => el.innerText.trim(), btn);
+      if (["Ikuti", "Follow"].includes(text)) {
+        targetBtn = btn;
+        break; // ambil yang pertama ketemu
+      }
+    }
+
+    if (targetBtn) {
+      let clicked = false;
+
+      // 1️⃣ Klik biasa
+      try {
+        await targetBtn.click();
+        clicked = true;
+        console.log(`➕ (click) Follow ke-${count + 1}`);
+      } catch {}
+
+      // 2️⃣ Tap kalau klik gagal
+      if (!clicked) {
+        try {
+          const box = await targetBtn.boundingBox();
+          if (box) {
+            await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+            clicked = true;
+            console.log(`➕ (tap) Follow ke-${count + 1}`);
+          }
+        } catch {}
+      }
+
       if (clicked) {
         count++;
-        console.log(`➕ (click) Follow ke-${count}`);
         await delay(interval);
         continue;
       }
-    } catch {}
-
-    // 2️⃣ Tap via touchscreen kalau klik gagal
-    try {
-      const btnHandles = await page.$$("button");
-      for (let btn of btnHandles) {
-        const text = await page.evaluate(el => el.innerText.trim(), btn);
-        if (["Ikuti", "Follow"].includes(text)) {
-          const box = await btn.boundingBox();
-          if (box) {
-            await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-            count++;
-            console.log(`➕ (tap) Follow ke-${count}`);
-            await delay(interval);
-            clicked = true;
-            break;
-          }
-        }
-      }
-      if (clicked) continue;
-    } catch {}
-
-    // 3️⃣ Scroll kalau tombol follow nggak ketemu
-    if (!clicked) {
-      if (mode === "dialog") {
-        console.log("🔄 Scroll dialog cari tombol...");
-        await page.evaluate(() => {
-          const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-          if (dialog) dialog.scrollBy(0, 200);
-        });
-      } else {
-        console.log("🔄 Scroll halaman cari tombol...");
-        await page.evaluate(() => window.scrollBy(0, 400));
-      }
-      await delay(2000);
     }
+
+    // Kalau nggak ketemu tombol → scroll
+    if (mode === "dialog") {
+      console.log("🔄 Scroll dialog cari tombol...");
+      await page.evaluate(() => {
+        const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
+        if (dialog) dialog.scrollBy(0, 200);
+      });
+    } else {
+      console.log("🔄 Scroll halaman cari tombol...");
+      await page.evaluate(() => window.scrollBy(0, 400));
+    }
+    await delay(2000);
   }
 
   console.log(`🎉 AutoFollow selesai, total follow: ${count}`);
-          }
-    
+  }
+
 
 // ======================
 // Main
