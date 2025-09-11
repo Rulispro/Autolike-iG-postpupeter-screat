@@ -19,8 +19,9 @@ try {
 }
 
 // =====================
-// 2. AutoLike (bookmarklet style)
-    async function autoLike(page, maxLikes = 10, interval = 3000) {
+// 2. AutoLike
+// =====================
+async function autoLike(page, maxLikes = 10, interval = 3000) {
   console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
   const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -28,42 +29,22 @@ try {
   for (let i = 0; i < maxLikes; i++) {
     let success = false;
 
- //   // === 1. Evaluate click ===
-  //  try {
-     // success = await page.evaluate(() => {
-       // const svg = document.querySelector("svg[aria-label='Suka'], svg[aria-label='Like']");
-     //   if (!svg) return false;
-      //  const btn = svg.closest("button,[role=button]");
-     //   if (!btn) return false;
-      //  btn.scrollIntoView({ behavior: "smooth", block: "center" });
-      //  btn.click();
-      //  return true;
-    //  });
-    //  if (success) {
-    //    console.log(`❤️ (evaluate) Klik like ke-${i + 1}`);
-  //    }
-  //  } catch (e) {
-   //   console.log("⚠️ Evaluate error:", e.message);
- //   }
-
-    // === 2. Puppeteer click ===
-    if (!success) {
-      try {
-        const btnHandle = await page.$("svg[aria-label='Suka'], svg[aria-label='Like']");
-        if (btnHandle) {
-          const button = await btnHandle.evaluateHandle(el => el.closest("button,[role=button]"));
-          if (button) {
-            await button.click();
-            success = true;
-            console.log(`❤️ (puppeteer.click) Klik like ke-${i + 1}`);
-          }
+    // === Puppeteer click ===
+    try {
+      const btnHandle = await page.$("svg[aria-label='Suka'], svg[aria-label='Like']");
+      if (btnHandle) {
+        const button = await btnHandle.evaluateHandle(el => el.closest("button,[role=button]"));
+        if (button) {
+          await button.click();
+          success = true;
+          console.log(`❤️ (puppeteer.click) Klik like ke-${i + 1}`);
         }
-      } catch (e) {
-        console.log("⚠️ Puppeteer click error:", e.message);
       }
+    } catch (e) {
+      console.log("⚠️ Puppeteer click error:", e.message);
     }
 
-    // === 3. Touchscreen tap ===
+    // === Touchscreen tap ===
     if (!success) {
       try {
         const btnHandle = await page.$("svg[aria-label='Suka'], svg[aria-label='Like']");
@@ -80,7 +61,7 @@ try {
       }
     }
 
-    // === 4. Kalau gagal total → scroll cari postingan baru ===
+    // === Kalau gagal total → scroll cari postingan baru ===
     if (!success) {
       console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
       await page.evaluate(() => window.scrollBy(0, 500));
@@ -100,74 +81,32 @@ try {
 }
 
 // =====================
+// 3. Klik followers (versi kuat)
 // =====================
-// 3. Klik followers dengan 3 cara
-// =====================
-async function clickFollowersLink(page, username) {
-  const selector = `a[href="/${username}/followers/"]`;
-  const found = await page.$(selector);
-  if (!found) {
-    console.log("❌ Link followers tidak ketemu");
-    return false;
-  }
+async function clickFollowersLink(page) {
+  let found = null;
 
-  // 1️⃣ Tap
-  try {
-    const box = await found.boundingBox();
-    if (box) {
-      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-      console.log("✅ Followers link ditekan (tap)");
-      return true;
-    }
-  } catch {}
-
-  // 2️⃣ dispatchEvent
-  try {
-    const ok = await page.evaluate((sel) => {
-      const el = document.querySelector(sel);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-        return true;
-      }
-      return false;
-    }, selector);
-    if (ok) {
-      console.log("✅ Followers link diklik (dispatchEvent)");
-      return true;
-    }
-  } catch {}
-
-  // 3️⃣ Klik biasa
-  try {
-    await found.click();
-    console.log("✅ Followers link diklik (.click)");
-    return true;
-  } catch {}
-
-  console.log("❌ Semua metode klik followers gagal");
-  return false;
-}
-
-// =====================
-// 3. Klik followers dengan 3 cara (update)
-// =====================
-async function clickFollowersLink(page, username) {
-  let selectorList = [
-    `a[href="/${username}/followers/"]`,
-    'a[href$="/followers/"]',
-    'a[href*="followers"]',
-    'a:has(span:contains("Pengikut"))',
-    'a:has(span:contains("Followers"))'
+  // 1️⃣ Cari dengan XPath teks Followers/Pengikut
+  const xpaths = [
+    "//a[contains(., 'Followers')]",
+    "//a[contains(., 'Pengikut')]",
+    "//span[contains(text(),'Followers')]/ancestor::a",
+    "//span[contains(text(),'Pengikut')]/ancestor::a"
   ];
 
-  let found = null;
-  for (const sel of selectorList) {
-    found = await page.$(sel).catch(() => null);
-    if (found) {
-      console.log(`✅ Link followers ketemu pakai selector: ${sel}`);
+  for (const xp of xpaths) {
+    const els = await page.$x(xp);
+    if (els.length > 0) {
+      found = els[0];
+      console.log(`✅ Link followers ketemu pakai XPath: ${xp}`);
       break;
     }
+  }
+
+  // 2️⃣ Kalau masih gagal, coba selector umum
+  if (!found) {
+    found = await page.$('a[href$="/followers/"]');
+    if (found) console.log("✅ Link followers ketemu pakai href selector");
   }
 
   if (!found) {
@@ -175,7 +114,7 @@ async function clickFollowersLink(page, username) {
     return false;
   }
 
-  // 1️⃣ Tap
+  // Klik pakai 3 cara
   try {
     const box = await found.boundingBox();
     if (box) {
@@ -185,24 +124,15 @@ async function clickFollowersLink(page, username) {
     }
   } catch {}
 
-  // 2️⃣ dispatchEvent
   try {
-    const ok = await page.evaluate((sel) => {
-      const el = document.querySelector(sel);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-        return true;
-      }
-      return false;
-    }, selectorList[0]);
-    if (ok) {
-      console.log("✅ Followers link diklik (dispatchEvent)");
-      return true;
-    }
+    await page.evaluate(el => {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }, found);
+    console.log("✅ Followers link diklik (dispatchEvent)");
+    return true;
   } catch {}
 
-  // 3️⃣ Klik biasa
   try {
     await found.click();
     console.log("✅ Followers link diklik (.click)");
@@ -214,11 +144,7 @@ async function clickFollowersLink(page, username) {
 }
 
 // =====================
-// 4. AutoFollow Function
-// =====================
-
-// =====================
-// 4. AutoFollow Function (versi fix desktop & mobile)
+// 4. AutoFollow Function (fix desktop & mobile)
 // =====================
 async function autoFollowFromTarget(page, username, total = 5, interval = 3000) {
   console.log(`🚀 Mulai AutoFollow dari @${username}, target ${total}`);
@@ -228,7 +154,7 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
   });
   console.log("✅ Halaman profil terbuka");
 
-  const ok = await clickFollowersLink(page, username);
+  const ok = await clickFollowersLink(page);
   if (!ok) return;
 
   // === Handle Desktop (dialog) vs Mobile (halaman baru) ===
@@ -317,7 +243,7 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
 }
 
 // =====================
-// 4. Main Flow
+// 5. Main Flow
 // =====================
 (async () => {
   const browser = await puppeteer.launch({
@@ -340,7 +266,6 @@ async function autoFollowFromTarget(page, username, total = 5, interval = 3000) 
 
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
   console.log("✅ Login dengan cookies berhasil");
-
   console.log("URL sekarang:", page.url());
   await page.screenshot({ path: "debug.png", fullPage: true });
 
