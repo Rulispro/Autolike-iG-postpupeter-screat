@@ -140,7 +140,7 @@ async function autoUnfollow(page, username, limit = 20, interval = 3000) {
 // ======================
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false, // ganti true kalau mau headless
+    headless: true, // ganti true kalau mau headless
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
