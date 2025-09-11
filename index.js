@@ -44,71 +44,71 @@ async function openFollowing(page, username) {
 
 // unfollow loop
 
-async function autoUnfollow(page, username, maxUnfollow = 5, interval = 3000) {
-  const mode = await openFollowing(page, username);
-  if (!mode) return;
-
+      async function autoUnfollow(page, limit = 20, interval = 3000) {
   let count = 0;
 
-  while (count < maxUnfollow) {
-    // cari tombol "Diikuti"/"Following"
-    const btnHandle = await page.evaluateHandle(() => {
-      const btn = Array.from(document.querySelectorAll("button"))
-        .find(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent);
-      return btn || null;
-    });
-
-    if (!btnHandle) {
-      console.log("❌ Tidak ada tombol Diikuti ditemukan, scroll cari lagi...");
-      if (mode === "dialog") {
-        await page.evaluate(() => {
-          const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-          if (dialog) dialog.scrollBy(0, 400);
-        });
-      } else {
-        await page.evaluate(() => window.scrollBy(0, 400));
-      }
-      await delay(1500);
-      continue;
-    }
-
+  while (count < limit) {
     try {
-      // klik tombol Diikuti
-      await btnHandle.click();
-      console.log(`🔘 Klik Diikuti ke-${count + 1}`);
-      await delay(1000);
+      // cari semua tombol "Diikuti" di halaman
+      const buttons = await page.$$("button");
 
-      // tunggu konfirmasi
-      const confirmBtn = await page.waitForSelector("button:has-text('Batal Mengikuti'), button:has-text('Unfollow')", { timeout: 4000 })
-        .catch(() => null);
+      let targetBtn = null;
+      for (let i = 0; i < buttons.length; i++) {
+        const text = await page.evaluate(el => el.innerText, buttons[i]);
+        if (/Diikuti|Following/i.test(text)) {
+          targetBtn = buttons[i];
+          break;
+        }
+      }
+
+      if (!targetBtn) {
+        console.log("⚠️ Tidak ada tombol 'Diikuti' yang bisa diklik, stop.");
+        break;
+      }
+
+      // klik tombol "Diikuti"
+      await targetBtn.click();
+      console.log(`🔘 Klik Diikuti ke-${count + 1}`);
+
+      // tunggu popup konfirmasi
+      try {
+        await page.waitForSelector("div[role=dialog], div._a9-v", { timeout: 5000 });
+      } catch {
+        console.log("⚠️ Popup konfirmasi tidak muncul, skip akun ini");
+        await page.evaluate(el => el.scrollIntoView({ behavior: "smooth", block: "center" }), targetBtn);
+        await page.evaluate(el => window.scrollBy(0, 80), targetBtn);
+        continue;
+      }
+
+      // cari tombol "Batal Mengikuti" / "Unfollow"
+      const confirmBtn = await page.evaluateHandle(() => {
+        const btns = Array.from(document.querySelectorAll("button"));
+        return btns.find(b => /Batal Mengikuti|Unfollow/i.test(b.innerText));
+      });
 
       if (confirmBtn) {
         await confirmBtn.click();
         console.log(`❌ Unfollow ke-${count + 1}`);
         count++;
-        await delay(interval);
       } else {
-        console.log("⚠️ Tombol konfirmasi tidak muncul, skip akun ini");
+        console.log("⚠️ Tombol 'Batal Mengikuti' tidak ditemukan, skip akun ini");
       }
 
-      // scroll kecil supaya akun berikutnya naik
-      if (mode === "dialog") {
-        await page.evaluate(() => {
-          const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-          if (dialog) dialog.scrollBy(0, 120);
-        });
-      } else {
-        await page.evaluate(() => window.scrollBy(0, 120));
-      }
-      await delay(1000);
+      // jeda sebelum lanjut akun berikutnya
+      await new Promise(r => setTimeout(r, interval));
 
-    } catch (e) {
-      console.log("❌ Error klik tombol:", e.message);
+      // scroll sedikit supaya tombol berikutnya terlihat
+      await page.evaluate(() => window.scrollBy(0, 100));
+
+    } catch (err) {
+      console.log("❌ Error:", err.message);
+      break;
     }
   }
 
-  console.log(`🎉 AutoUnfollow selesai, total: ${count}`);
-}
+  console.log(`✅ Selesai unfollow ${count} akun`);
+    }
+                
   
 (async () => {
   const browser = await puppeteer.launch({
