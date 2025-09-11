@@ -83,6 +83,17 @@ async function autoUnfollow(page, limit = 10, interval = 3000) {
 
       // tunggu popup konfirmasi
       try {
+       // cek popup konfirmasi
+      const confirmClicked = await page.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll("button"));
+        const confirm = btns.find(b => /Batal Mengikuti|Unfollow/i.test(b.innerText));
+        if (confirm) {
+          confirm.click();
+          return true;
+        }
+        return false;
+      });
+
         await page.waitForSelector("div[role=dialog], div._a9-v", {
           timeout: 5000,
         });
