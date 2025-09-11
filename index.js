@@ -112,17 +112,25 @@ async function autoUnfollow(page, limit = 10, interval = 3000) {
    //     console.log("⚠️ Tombol 'Batal Mengikuti' tidak ditemukan, skip akun ini");
   //    }
 // cari tombol konfirmasi "Batal Mengikuti / Unfollow"
-const confirmBtns = await page.$x(
-  "//button[contains(text(),'Batal Mengikuti') or contains(text(),'Unfollow')]"
-);
+// cari tombol "Batal Mengikuti / Unfollow" tanpa $x
+const confirmClicked = await page.$$eval("button", (btns) => {
+  const target = btns.find(b =>
+    /Batal Mengikuti|Unfollow/i.test(b.innerText.trim())
+  );
+  if (target) {
+    target.click();
+    return true;
+  }
+  return false;
+});
 
-if (confirmBtns.length > 0) {
-  await confirmBtns[0].click();
+if (confirmClicked) {
   console.log(`❌ Unfollow ke-${count + 1}`);
   count++;
 } else {
   console.log("⚠️ Tombol 'Batal Mengikuti' tidak ditemukan, skip akun ini");
 }
+      
       
       // jeda sebelum lanjut
       await delay(interval);
