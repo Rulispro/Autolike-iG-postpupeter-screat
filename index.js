@@ -84,7 +84,7 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
 // =============== Main Flow ===============
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false, // set true kalau mau tanpa UI
+    headless: true, // set true kalau mau tanpa UI
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
