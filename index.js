@@ -1,29 +1,22 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 
-const delay = (ms) => new Promise(res => setTimeout(res, ms));
+const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
-// ======================
-// Load Cookies
-// ======================
 let cookies = [];
 try {
-  const raw = fs.readFileSync("./cookies.json", "utf8");
-  cookies = JSON.parse(raw);
-  console.log("✅ Cookies berhasil dimuat");
+  cookies = JSON.parse(fs.readFileSync("./cookies.json", "utf8"));
+  console.log("✅ Cookies dimuat");
 } catch (e) {
-  console.error("❌ Gagal membaca cookies.json:", e.message);
+  console.error("❌ Gagal baca cookies.json:", e.message);
   process.exit(1);
 }
 
-// ======================
-// Auto Unfollow
-// ======================
-async function autoUnfollow(page, username, limit = 10, interval = 3000) {
+async function autoUnfollow(page, username, limit = 5, interval = 3000) {
   console.log(`🚀 Buka profil @${username}`);
   await page.goto(`https://www.instagram.com/${username}/`, { waitUntil: "networkidle2" });
 
-  // buka daftar following
+  // Buka daftar following
   try {
     await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
     await page.click(`a[href="/${username}/following/"]`);
@@ -35,57 +28,63 @@ async function autoUnfollow(page, username, limit = 10, interval = 3000) {
   }
 
   let count = 0;
-
   while (count < limit) {
+    // 1️⃣ ambil tombol "Diikuti"
+    const targetBtnHandle = await page.evaluateHandle(() => {
+      const buttons = Array.from(document.querySelectorAll("button"));
+      return buttons.find(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null) || null;
+    });
+
+    const targetBtn = targetBtnHandle.asElement();
+    if (!targetBtn) {
+      console.log("⚠️ Tidak ada tombol 'Diikuti' ditemukan, scroll...");
+      await page.evaluate(() => window.scrollBy(0, 300));
+      await delay(1500);
+      continue;
+    }
+
+    // klik tombol "Diikuti"
     try {
-      // cari tombol "Diikuti"
-      const targetBtn = await page.evaluateHandle(() => {
-        const buttons = Array.from(document.querySelectorAll("button"));
-        return buttons.find(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null);
-      });
-
-      if (!targetBtn) {
-        console.log("⚠️ Tidak ada tombol 'Diikuti' ditemukan.");
-        break;
-      }
-
-      // klik tombol "Diikuti"
       await targetBtn.click();
       console.log(`🔘 Klik Diikuti ke-${count + 1}`);
-      await delay(1500);
-
-      // cek popup konfirmasi dan klik tombol "Batal Mengikuti"/"Unfollow"
-      const confirmClicked = await page.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll("button"));
-        const confirm = buttons.find(b => /Batal Mengikuti|Unfollow/i.test(b.innerText));
-        if (confirm) {
-          confirm.click();
-          return true;
+    } catch {
+      try {
+        const box = await targetBtn.boundingBox();
+        if (box) {
+          await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+          console.log(`🔘 Tap Diikuti ke-${count + 1}`);
         }
-        return false;
-      });
+      } catch {}
+    }
 
-      if (confirmClicked) {
-        console.log(`❌ Unfollow ke-${count + 1} (popup)`);
+    await delay(1500);
+
+    // 2️⃣ cek popup / konfirmasi
+    const confirmClicked = await page.evaluate(() => {
+      const dialog = document.querySelector('div[role="dialog"]');
+      if (!dialog) return false;
+      const btn = Array.from(dialog.querySelectorAll("button"))
+        .find(b => /Batal Mengikuti|Unfollow/i.test(b.innerText));
+      if (btn) { btn.click(); return true; }
+      return false;
+    });
+
+    if (confirmClicked) {
+      console.log(`❌ Unfollow ke-${count + 1} (popup)`);
+      count++;
+    } else {
+      // 3️⃣ cek apakah tombol berubah jadi "Ikuti"
+      const stillFollowing = await page.evaluate(el => el.innerText, targetBtn).catch(() => "");
+      if (/Ikuti|Follow/i.test(stillFollowing)) {
+        console.log(`✅ Unfollow ke-${count + 1} (langsung tanpa popup)`);
         count++;
       } else {
-        // cek apakah tombol berubah jadi "Ikuti"
-        const stillFollowing = await page.evaluate(el => el.innerText, targetBtn).catch(() => "");
-        if (/Ikuti|Follow/i.test(stillFollowing)) {
-          console.log(`✅ Unfollow ke-${count + 1} (langsung tanpa popup)`);
-          count++;
-        } else {
-          console.log("⚠️ Tombol konfirmasi tidak muncul & status tidak berubah → skip akun ini");
-        }
+        console.log("⚠️ Tombol konfirmasi tidak muncul & status tidak berubah, skip akun ini");
       }
-
-      await delay(interval);
-      await page.evaluate(() => window.scrollBy(0, 150)); // scroll sedikit supaya tombol berikutnya terlihat
-
-    } catch (err) {
-      console.log("❌ Error:", err.message);
-      break;
     }
+
+    await delay(interval);
+    await page.evaluate(() => window.scrollBy(0, 150));
   }
 
   console.log(`🎉 Selesai unfollow ${count} akun`);
@@ -101,12 +100,17 @@ async function autoUnfollow(page, username, limit = 10, interval = 3000) {
   });
   const page = await browser.newPage();
 
+  // Mode mobile
+  await page.setUserAgent(
+    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
+  );
+  await page.setViewport({ width: 412, height: 915 });
+
   await page.setCookie(...cookies);
-
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
-  console.log("✅ Login berhasil dengan cookies");
+  console.log("✅ Login berhasil");
 
-  await autoUnfollow(page, "zayrahijab", 5, 3000); // Unfollow 5 akun, jeda 3 detik
+  await autoUnfollow(page, "zayrahijab", 5, 3000);
 
   await browser.close();
 })();
