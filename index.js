@@ -43,6 +43,7 @@ async function openFollowing(page, username) {
 }
 
 // unfollow loop
+
 async function autoUnfollow(page, username, maxUnfollow = 5, interval = 3000) {
   const mode = await openFollowing(page, username);
   if (!mode) return;
@@ -50,40 +51,47 @@ async function autoUnfollow(page, username, maxUnfollow = 5, interval = 3000) {
   let count = 0;
 
   while (count < maxUnfollow) {
-    let clicked = false;
-
-    // cari tombol "Diikuti" / "Following"
+    // cari tombol "Diikuti"/"Following"
     const btnHandle = await page.evaluateHandle(() => {
-      const buttons = Array.from(document.querySelectorAll("button"))
-        .filter(b => /Diikuti|Following/i.test(b.innerText.trim()) && b.offsetParent !== null);
-      return buttons.length > 0 ? buttons[0] : null;
+      const btn = Array.from(document.querySelectorAll("button"))
+        .find(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent);
+      return btn || null;
     });
 
-    if (btnHandle) {
-      try {
-        await btnHandle.click();
-        console.log(`🔘 Klik Diikuti ke-${count + 1}`);
-        await delay(1000);
-
-        // cari tombol konfirmasi "Unfollow" / "Batal Mengikuti"
-        const confirmBtn = await page.evaluateHandle(() => {
-          return Array.from(document.querySelectorAll("button"))
-            .find(b => /Batal Mengikuti|Unfollow/i.test(b.innerText));
+    if (!btnHandle) {
+      console.log("❌ Tidak ada tombol Diikuti ditemukan, scroll cari lagi...");
+      if (mode === "dialog") {
+        await page.evaluate(() => {
+          const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
+          if (dialog) dialog.scrollBy(0, 400);
         });
-
-        if (confirmBtn) {
-          await confirmBtn.click();
-          console.log(`❌ Unfollow ke-${count + 1}`);
-          clicked = true;
-        }
-      } catch {}
+      } else {
+        await page.evaluate(() => window.scrollBy(0, 400));
+      }
+      await delay(1500);
+      continue;
     }
 
-    if (clicked) {
-      count++;
-      await delay(interval);
+    try {
+      // klik tombol Diikuti
+      await btnHandle.click();
+      console.log(`🔘 Klik Diikuti ke-${count + 1}`);
+      await delay(1000);
 
-      // scroll biar akun baru masuk viewport
+      // tunggu konfirmasi
+      const confirmBtn = await page.waitForSelector("button:has-text('Batal Mengikuti'), button:has-text('Unfollow')", { timeout: 4000 })
+        .catch(() => null);
+
+      if (confirmBtn) {
+        await confirmBtn.click();
+        console.log(`❌ Unfollow ke-${count + 1}`);
+        count++;
+        await delay(interval);
+      } else {
+        console.log("⚠️ Tombol konfirmasi tidak muncul, skip akun ini");
+      }
+
+      // scroll kecil supaya akun berikutnya naik
       if (mode === "dialog") {
         await page.evaluate(() => {
           const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
@@ -93,26 +101,15 @@ async function autoUnfollow(page, username, maxUnfollow = 5, interval = 3000) {
         await page.evaluate(() => window.scrollBy(0, 120));
       }
       await delay(1000);
-      continue;
-    }
 
-    // kalau tidak ada tombol → scroll jauh
-    if (mode === "dialog") {
-      console.log("🔄 Scroll dialog cari tombol...");
-      await page.evaluate(() => {
-        const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-        if (dialog) dialog.scrollBy(0, 400);
-      });
-    } else {
-      console.log("🔄 Scroll halaman cari tombol...");
-      await page.evaluate(() => window.scrollBy(0, 400));
+    } catch (e) {
+      console.log("❌ Error klik tombol:", e.message);
     }
-    await delay(1500);
   }
 
   console.log(`🎉 AutoUnfollow selesai, total: ${count}`);
 }
-
+  
 (async () => {
   const browser = await puppeteer.launch({
     headless: true,
