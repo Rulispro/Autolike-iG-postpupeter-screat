@@ -1,4 +1,4 @@
-const puppeteer = require("puppeteer");
+ const puppeteer = require("puppeteer");
 const fs = require("fs");
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -14,7 +14,7 @@ try {
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: true, // ganti true kalau mau headless
+    headless: false,
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
   const page = await browser.newPage();
@@ -26,7 +26,7 @@ try {
 
   await page.setCookie(...cookies);
 
-  const username = "sendy81a"; // ganti target username
+  const username = "sendy81a"; // ganti username target
   const followingUrl = `https://www.instagram.com/${username}/following/`;
 
   // Buka halaman following
@@ -34,21 +34,35 @@ try {
   console.log("✅ Halaman following terbuka");
   await delay(3000);
 
-  // Ambil tombol "Diikuti"
-  let buttons = await page.$x("//button[contains(text(),'Diikuti') or contains(text(),'Following')]");
-  console.log(`🔹 Ditemukan ${buttons.length} tombol Diikuti`);
+  // Ambil tombol "Diikuti" / "Following" lewat page.evaluate
+  const buttonHandles = await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll("button"));
+    return btns
+      .filter(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null)
+      .map(b => b.outerHTML); // simpan outerHTML untuk debug/log
+  });
 
-  for (let i = 0; i < buttons.length; i++) {
-    // Scroll ke tombol supaya terlihat
-    await buttons[i].evaluate(b => b.scrollIntoView());
-    await delay(500);
+  console.log(`🔹 Ditemukan ${buttonHandles.length} tombol Diikuti`);
 
-    // Klik tombol Diikuti
-    await buttons[i].evaluate(b => b.click());
-    console.log(`🔘 Klik tombol Diikuti #${i + 1}`);
+  for (let i = 0; i < buttonHandles.length; i++) {
+    // Klik tombol lewat page.evaluate
+    const clicked = await page.evaluate(idx => {
+      const btns = Array.from(document.querySelectorAll("button"))
+        .filter(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null);
+      if (btns[idx]) {
+        btns[idx].scrollIntoView();
+        btns[idx].click();
+        return true;
+      }
+      return false;
+    }, i);
+
+    if (clicked) console.log(`🔘 Klik tombol Diikuti #${i + 1}`);
+    else console.log(`⚠️ Tombol Diikuti #${i + 1} tidak ditemukan`);
+
     await delay(1000);
 
-    // DEBUG: Ambil semua elemen popup dan log
+    // Debug popup
     const popupElements = await page.evaluate(() => {
       const dialog = document.querySelector('div[role="dialog"]');
       if (!dialog) return [];
@@ -60,22 +74,15 @@ try {
       }));
     });
 
-    if (popupElements.length === 0) {
-      console.log("⚠️ Tidak ada elemen di popup");
-    } else {
-      console.log("✅ Elemen popup:");
-      popupElements.forEach((el, idx) => {
-        if(el.text.includes('Batal Mengikuti') || el.text.includes('Unfollow')) {
-          console.log(`🟢 [${idx}] [${el.tag}] "${el.text}" class="${el.className}"`);
-        } else {
-          // optional: log semua
-          console.log(`[${idx}] [${el.tag}] "${el.text}" class="${el.className}"`);
-        }
-      });
-    }
+    console.log(`✅ Elemen popup:`);
+    popupElements.forEach((el, idx) => {
+      if(el.text.includes('Batal Mengikuti') || el.text.includes('Unfollow')) {
+        console.log(`🟢 [${idx}] [${el.tag}] "${el.text}" class="${el.className}"`);
+      }
+    });
 
     // Klik tombol Batal Mengikuti / Unfollow
-    const clicked = await page.evaluate(() => {
+    const unfollowClicked = await page.evaluate(() => {
       const dialog = document.querySelector('div[role="dialog"]');
       if (!dialog) return false;
       const btn = Array.from(dialog.querySelectorAll("*"))
@@ -87,7 +94,7 @@ try {
       return false;
     });
 
-    if (clicked) console.log(`❌ Konfirmasi Unfollow diklik #${i + 1}`);
+    if (unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${i + 1}`);
     else console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${i + 1}`);
 
     await delay(1000);
