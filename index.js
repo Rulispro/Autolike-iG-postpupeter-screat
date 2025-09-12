@@ -14,11 +14,13 @@ try {
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: true, // ganti false kalau mau lihat browser
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
+
   const page = await browser.newPage();
 
+  // Mode mobile
   await page.setUserAgent(
     "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
   );
@@ -34,101 +36,80 @@ try {
   console.log("✅ Halaman following terbuka");
   await delay(3000);
 
-  // Ambil tombol "Diikuti" / "Following" lewat page.evaluate
-  const buttonHandles = await page.evaluate(() => {
-    const btns = Array.from(document.querySelectorAll("button"));
-    return btns
-      .filter(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null)
-      .map(b => b.outerHTML); // simpan outerHTML untuk debug/log
-  });
+  // Scroll dan ambil semua tombol "Diikuti / Following"
+  let buttonsClicked = 0;
+  let moreButtons = true;
 
-  console.log(`🔹 Ditemukan ${buttonHandles.length} tombol Diikuti`);
-
-  for (let i = 0; i < buttonHandles.length; i++) {
-    // Klik tombol lewat page.evaluate
-    const clicked = await page.evaluate(idx => {
+  while (moreButtons) {
+    // Ambil semua tombol visible
+    const btnIndexes = await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll("button"))
         .filter(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null);
-      if (btns[idx]) {
-        btns[idx].scrollIntoView();
-        btns[idx].click();
-        return true;
-      }
-      return false;
-    }, i);
-
-    if (clicked) console.log(`🔘 Klik tombol Diikuti #${i + 1}`);
-    else console.log(`⚠️ Tombol Diikuti #${i + 1} tidak ditemukan`);
-
-    await delay(1000);
-
-    // Debug popup
-    const popupElements = await page.evaluate(() => {
-      const dialog = document.querySelector('div[role="dialog"]');
-      if (!dialog) return [];
-      return Array.from(dialog.querySelectorAll("*")).map(el => ({
-        tag: el.tagName,
-        text: (el.innerText || '').trim(),
-        className: el.className,
-        html: el.outerHTML
-      }));
+      return btns.map((_, idx) => idx);
     });
 
-    console.log(`✅ Elemen popup:`);
-    popupElements.forEach((el, idx) => {
-      if(el.text.includes('Batal Mengikuti') || el.text.includes('Unfollow')) {
-        console.log(`🟢 [${idx}] [${el.tag}] "${el.text}" class="${el.className}"`);
-      }
-    });
-
-    // Klik tombol Batal Mengikuti / Unfollow
-   // const unfollowClicked = await page.evaluate(() => {
-    //  const dialog = document.querySelector('div[role="dialog"]');
-    //  if (!dialog) return false;
-     // const btn = Array.from(dialog.querySelectorAll("*"))
-     ///   .find(el => /Batal Mengikuti|Unfollow/i.test(el.innerText));
-  //  if (btn) {
-    //    btn.click();
-    //    return true;
-   //   }
- //    return false;
-//    });
-
-   // if (unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${i + 1}`);
-//    else console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${i + 1}`);
-   
-// Tunggu popup muncul sebentar
-await delay(800);
-
-// Cari dan klik tombol "Batal Mengikuti / Unfollow"
-const unfollowClicked = await page.evaluate(() => {
-  const buttons = Array.from(document.querySelectorAll("button"))
-    .filter(b => b.offsetParent !== null); // hanya tombol visible
-  for (const btn of buttons) {
-    if (/Batal Mengikuti|Unfollow/i.test(btn.innerText)) {
-      btn.scrollIntoView();
-      btn.click();
-      return true;
+    if (btnIndexes.length === 0) {
+      moreButtons = false;
+      break;
     }
+
+    for (let i = 0; i < btnIndexes.length; i++) {
+      buttonsClicked++;
+      const clicked = await page.evaluate(idx => {
+        const btns = Array.from(document.querySelectorAll("button"))
+          .filter(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null);
+        if (btns[idx]) {
+          btns[idx].scrollIntoView();
+          btns[idx].click();
+          return true;
+        }
+        return false;
+      }, i);
+
+      if (!clicked) continue;
+      console.log(`🔘 Klik tombol Diikuti #${buttonsClicked}`);
+
+      // Tunggu popup muncul
+      try {
+        await page.waitForSelector('div[role="dialog"] button', { visible: true, timeout: 2000 });
+      } catch {}
+
+      // Klik tombol Unfollow di popup
+      const unfollowClicked = await page.evaluate(() => {
+        const dialog = document.querySelector('div[role="dialog"]');
+        if (!dialog) return false;
+        const btn = Array.from(dialog.querySelectorAll("button"))
+          .find(b => /Unfollow|Batal Mengikuti/i.test(b.innerText));
+        if (btn) {
+          btn.scrollIntoView();
+          btn.click();
+          return true;
+        }
+        return false;
+      });
+
+      if (unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${buttonsClicked}`);
+      else {
+        console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${buttonsClicked}`);
+
+        // Debug tombol di dialog
+        const dialogButtons = await page.evaluate(() => {
+          const dialog = document.querySelector('div[role="dialog"]');
+          if (!dialog) return [];
+          return Array.from(dialog.querySelectorAll("button"))
+            .map(b => ({ text: b.innerText, class: b.className }));
+        });
+        console.log("🔹 Tombol di popup:", dialogButtons);
+      }
+
+      await delay(1000);
+    }
+
+    // Scroll ke bawah untuk load tombol baru
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+    await delay(1500);
   }
-  return false;
-});
 
-if (unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${i + 1}`);
-else console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${i + 1}`);
-
-// Debug: tampilkan semua tombol visible dengan text dan class
-const debugButtons = await page.evaluate(() => {
-  return Array.from(document.querySelectorAll("button"))
-    .filter(b => b.offsetParent !== null)
-    .map(b => ({ text: b.innerText.trim(), class: b.className }));
-});
-console.log("🔹 Tombol visible:", debugButtons);
-  
-    
-    await delay(1000);
-  }
-
-  console.log("✅ Selesai proses unfollow visible buttons");
+  console.log("✅ Selesai proses unfollow semua tombol visible");
   await browser.close();
 })();
