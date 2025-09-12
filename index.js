@@ -82,21 +82,50 @@ try {
     });
 
     // Klik tombol Batal Mengikuti / Unfollow
-    const unfollowClicked = await page.evaluate(() => {
-      const dialog = document.querySelector('div[role="dialog"]');
-      if (!dialog) return false;
-      const btn = Array.from(dialog.querySelectorAll("*"))
-        .find(el => /Batal Mengikuti|Unfollow/i.test(el.innerText));
-      if (btn) {
-        btn.click();
-        return true;
-      }
-      return false;
-    });
+   // const unfollowClicked = await page.evaluate(() => {
+    //  const dialog = document.querySelector('div[role="dialog"]');
+    //  if (!dialog) return false;
+     // const btn = Array.from(dialog.querySelectorAll("*"))
+     ///   .find(el => /Batal Mengikuti|Unfollow/i.test(el.innerText));
+  //  if (btn) {
+    //    btn.click();
+    //    return true;
+   //   }
+ //    return false;
+//    });
 
-    if (unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${i + 1}`);
-    else console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${i + 1}`);
+   // if (unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${i + 1}`);
+//    else console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${i + 1}`);
+   
+// Tunggu popup muncul sebentar
+await delay(800);
 
+// Cari dan klik tombol "Batal Mengikuti / Unfollow"
+const unfollowClicked = await page.evaluate(() => {
+  const buttons = Array.from(document.querySelectorAll("button"))
+    .filter(b => b.offsetParent !== null); // hanya tombol visible
+  for (const btn of buttons) {
+    if (/Batal Mengikuti|Unfollow/i.test(btn.innerText)) {
+      btn.scrollIntoView();
+      btn.click();
+      return true;
+    }
+  }
+  return false;
+});
+
+if (unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${i + 1}`);
+else console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${i + 1}`);
+
+// Debug: tampilkan semua tombol visible dengan text dan class
+const debugButtons = await page.evaluate(() => {
+  return Array.from(document.querySelectorAll("button"))
+    .filter(b => b.offsetParent !== null)
+    .map(b => ({ text: b.innerText.trim(), class: b.className }));
+});
+console.log("🔹 Tombol visible:", debugButtons);
+  
+    
     await delay(1000);
   }
 
