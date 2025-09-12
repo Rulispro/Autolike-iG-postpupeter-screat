@@ -1,4 +1,4 @@
- const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer");
 const fs = require("fs");
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -14,7 +14,7 @@ try {
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
   const page = await browser.newPage();
