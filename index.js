@@ -80,33 +80,35 @@ try {
         await page.waitForSelector('div[role="dialog"] button', { visible: true, timeout: 5000 });
       } catch {}
 
-      // Klik tombol Unfollow di popup
-      const unfollowClicked = await page.evaluate(() => {
-        const dialog = document.querySelector('div[role="dialog"]');
-        if (!dialog) return false;
-        const btn = Array.from(dialog.querySelectorAll("button"))
-          .find(b => /Unfollow|Batal Mengikuti/i.test(b.innerText));
-        if (btn) {
-          btn.scrollIntoView();
-          btn.click();
-          return true;
-        }
-        return false;
-      });
+      // Tunggu popup muncul dulu
+await delay(1500);
 
-      if (unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${buttonsClicked}`);
-      else {
-        console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${buttonsClicked}`);
+// Klik tombol Batal Mengikuti / Unfollow pakai selector spesifik
+const unfollowClicked = await page.evaluate(() => {
+  const btn = Array.from(document.querySelectorAll('button._a9--._ap36._a9-_'))
+    .find(b => /Batal mengikuti|Unfollow/i.test(b.innerText));
+  if(btn){
+    btn.scrollIntoView();
+    btn.click();
+    return true;
+  }
+  return false;
+});
 
-        // Debug tombol di dialog
-        const dialogButtons = await page.evaluate(() => {
-          const dialog = document.querySelector('div[role="dialog"]');
-          if (!dialog) return [];
-          return Array.from(dialog.querySelectorAll("button"))
-            .map(b => ({ text: b.innerText, class: b.className }));
-        });
-        console.log("🔹 Tombol di popup:", dialogButtons);
-      }
+if(unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${buttonsClicked}`);
+else {
+  console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${buttonsClicked}`);
+
+  // Debug tombol di popup
+  const dialogButtons = await page.evaluate(() => {
+    const dialog = document.querySelector('div[role="dialog"]');
+    if (!dialog) return [];
+    return Array.from(dialog.querySelectorAll("button"))
+      .map(b => ({ text: b.innerText, class: b.className }));
+  });
+  console.log("🔹 Tombol di popup:", dialogButtons);
+}
+      
 
       await delay(3000);
       
