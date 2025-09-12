@@ -61,6 +61,9 @@ try {
         if (btns[idx]) {
           btns[idx].scrollIntoView();
           btns[idx].click();
+          // Tunggu popup muncul sebentar
+        
+
           return true;
         }
         return false;
@@ -68,10 +71,13 @@ try {
 
       if (!clicked) continue;
       console.log(`🔘 Klik tombol Diikuti #${buttonsClicked}`);
+  // Tunggu popup muncul sebentar
+    await delay(1500); // bisa ditambah jadi 2000 kalau perlu
 
+      
       // Tunggu popup muncul
       try {
-        await page.waitForSelector('div[role="dialog"] button', { visible: true, timeout: 2000 });
+        await page.waitForSelector('div[role="dialog"] button', { visible: true, timeout: 5000 });
       } catch {}
 
       // Klik tombol Unfollow di popup
@@ -102,12 +108,22 @@ try {
         console.log("🔹 Tombol di popup:", dialogButtons);
       }
 
-      await delay(1000);
+      await delay(3000);
+      
+    // Debug semua div (opsional, kalau Unfollow tidak ditemukan)
+const allDivs = await page.evaluate(() => 
+  Array.from(document.querySelectorAll('div')).map(d => ({
+    text: d.innerText,
+    className: d.className
+  }))
+);
+console.log("🔹 Semua div:", allDivs);
+
     }
 
     // Scroll ke bawah untuk load tombol baru
     await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-    await delay(1500);
+    await delay(4000);
   }
 
   console.log("✅ Selesai proses unfollow semua tombol visible");
