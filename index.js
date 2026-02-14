@@ -37,7 +37,6 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
 
 
-
       if (success) {
         console.log(`❤️ (evaluate) Like ke-${i + 1}`);
       }
