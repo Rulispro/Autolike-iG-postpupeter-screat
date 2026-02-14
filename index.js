@@ -17,8 +17,7 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   for (let i = 0; i < maxLikes; i++) {
     
     // === Cara 1: evaluate click ===
-  const result = await page.evaluate(() => {
-  const result = await page.evaluate(() => {
+   const result = await page.evaluate(() => {
   const posts = Array.from(document.querySelectorAll("article"));
 
   for (const post of posts) {
