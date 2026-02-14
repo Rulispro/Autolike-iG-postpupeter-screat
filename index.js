@@ -17,14 +17,13 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   for (let i = 0; i < maxLikes; i++) {
     
     // === Cara 1: evaluate click ===
-    const result = await page.evaluate(() => {
+  const result = await page.evaluate(() => {
   try {
     const svgs = Array.from(
-      document.querySelectorAll('svg[aria-label="Like"]')
+      document.querySelectorAll('svg[aria-label="Like"]') // <-- ganti "Suka" ke "Like"
     );
 
-    if (!svgs.length)
-      return { status: false };
+    if (!svgs.length) return { status: false };
 
     for (const svg of svgs) {
       const btn =
@@ -47,31 +46,6 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
 let success = result.status;
 
-// === Cara 2: fallback pakai puppeteer click ===
-if (!success) {
-  try {
-    const btnHandle = await page.$(
-      "svg[aria-label='Like'], svg[aria-label='Suka']"
-    );
-
-    if (btnHandle) {
-      const buttonHandle = await btnHandle.evaluateHandle(el =>
-        el.closest("button")
-      );
-
-      const elementHandle = buttonHandle.asElement();
-
-      if (elementHandle) {
-        await elementHandle.click();
-        success = true;
-        console.log(`❤️ (puppeteer.click) Like ke-${i + 1}`);
-      }
-    }
-  } catch (e) {
-    console.log("⚠️ Puppeteer click error:", e.message);
-  }
-}
-    
 
     // === Kalau gagal total → scroll cari postingan baru ===
     if (!success) {
