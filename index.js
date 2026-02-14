@@ -15,43 +15,36 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   const delay = ms => new Promise(r => setTimeout(r, ms));
 
   for (let i = 0; i < maxLikes; i++) {
-    // 1️⃣ Cari tombol Like/Suka yang belum diklik
+
     const result = await page.evaluate(() => {
-  const buttons = Array.from(
-    document.querySelectorAll('[role="button"]')
-  );
+      const likes = Array.from(
+        document.querySelectorAll('svg[aria-label="Like"]')
+      );
 
-  for (const btn of buttons) {
-    const label = btn.getAttribute("aria-label");
+      if (likes.length === 0) return false;
 
-    if (!label) continue;
+      const btn = likes[0];
 
-    if (label.includes("Like") || label.includes("Suka")) {
       btn.scrollIntoView({ block: "center" });
-      btn.click();
+
+      btn.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      btn.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+      btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
       return true;
-    }
-  }
+    });
 
-  return false;
-});
-
-
-    // 2️⃣ Jika tombol tidak ditemukan, scroll ke bawah dan tunggu
     if (!result) {
-      console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
+      console.log(`❌ Like ke-${i + 1} gagal, scroll...`);
       await page.evaluate(() => window.scrollBy(0, 900));
       await delay(2500);
-      i--; // ulangi loop untuk like yang sama
+      i--;
       continue;
     }
 
     console.log(`❤️ Like ke-${i + 1} berhasil`);
 
-    // 3️⃣ Delay random biar natural
     await delay(interval + Math.random() * 1500);
-
-    // 4️⃣ Scroll sedikit untuk postingan berikutnya
     await page.evaluate(() => window.scrollBy(0, 700));
     await delay(2000);
   }
