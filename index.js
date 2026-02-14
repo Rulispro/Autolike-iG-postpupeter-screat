@@ -19,7 +19,17 @@ try {
   });
 
   const page = await browser.newPage();
+ //REKAMAN 
+  const recorder = new PuppeteerScreenRecorder(page, {
+  fps: 25,
+  videoFrame: {
+    width: 412,
+    height: 915,
+  },
+});
 
+await recorder.start("recording_unfollow.mp4");
+  
   // Mode mobile
   await page.setUserAgent(
     "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
@@ -129,5 +139,7 @@ console.log("🔹 Semua div:", allDivs);
   }
 
   console.log("✅ Selesai proses unfollow semua tombol visible");
+  await recorder.stop();
+console.log("🎥 Recording selesai");
   await browser.close();
 })();
