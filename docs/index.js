@@ -113,10 +113,6 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
   return rowDate === today;
 });
 
-console.log(`📋 igUnfollow row ${acc.account}:`, rowsIGForAccount.length);
-
-
-       
 console.log(`📋 Igunfollow row ${acc.account}:`, rowsIGForAccount.length);
 //console.log(`📋 Status row ${acc.account}:`, rowsStatusForAccount.length);
 //console.log(`📋 addFriendFollowers row ${acc.account}:`, rowsAddFriendFollowersForAccount.length);
@@ -149,16 +145,13 @@ if (mode === "igunfollow") {
       console.log(`✅ Selesai akun ${acc.account}`);
 
       await page.close();
-      await context.close();
-
-      await delay(10000); // delay antar akun
+     await context.close();
+      const delayRow = rowsIGForAccount.find(r => r.delay_akun);
+     const delayAkun = Number(delayRow?.delay_akun) || 10000;
+       console.log("🕒 Delay akun:", delayAkun);
+      await delay(delayAkun);
+    
     }
-
-    const delayRow = rowsIGForAccount.find(r => r.delay_akun);
-const delayAkun = Number(delayRow?.delay_akun) || 10000;
-
-console.log("🕒 Delay akun:", delayAkun);
-await delay(delayAkun);
 
     await browser.close();
     console.log("🎉 Semua akun selesai");
