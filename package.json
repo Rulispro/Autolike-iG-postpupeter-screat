@@ -6,7 +6,10 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "puppeteer": "19.0.0"
+    "luxon": "^3.4.4",
+    "xlsx": "^0.18.5",
+    "puppeteer": "19.0.0",
+    "puppeteer-extra": "^3.3.4",
+    "puppeteer-extra-plugin-stealth": "^2.11.1"
   }
 }
-
