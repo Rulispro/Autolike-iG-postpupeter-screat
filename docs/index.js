@@ -26,7 +26,8 @@ function readTemplate(filePath) {
   const sheets = {};
 
   workbook.SheetNames.forEach(name => {
-    sheets[name] = XLSX.utils.sheet_to_json(
+    const cleanName = name.trim();   // 🔥 TRIM DI SINI
+    sheets[cleanName] = XLSX.utils.sheet_to_json(
       workbook.Sheets[name],
       { defval: "" }
     );
