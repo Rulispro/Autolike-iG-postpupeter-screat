@@ -1,11 +1,41 @@
 "use strict";
 
+"use strict";
+
 const fs = require("fs");
-const XLSX = require("xlsx");
+const path = require("path");
+const https = require("https");
+const XLSX = require("xlsx");   
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 
-puppeteer.use(StealthPlugin());
+puppeteer.use(StealthPlugin())
+
+//PARSE TANGGAL///
+function parseTanggalXLSX(tgl) {
+  if (!tgl) return null;
+
+  // format: M/D/YY atau MM/DD/YY
+  const [m, d, y] = tgl.split("/");
+
+  const year = Number(y) < 100 ? 2000 + Number(y) : Number(y);
+
+  return `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+ // TEMPLATE XLSX 
+function readTemplate(filePath) {
+  const workbook = XLSX.readFile(filePath);
+  const sheets = {};
+
+  workbook.SheetNames.forEach(name => {
+    sheets[name] = XLSX.utils.sheet_to_json(
+      workbook.Sheets[name],
+      { defval: "" }
+    );
+  });
+
+  return sheets;
+}
 
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -48,6 +78,22 @@ const igUnfollowRows = templates.igUnfollow || [];
     for (const acc of accounts) {
 
       console.log(`\n🚀 Start akun: ${acc.account}`);
+      const today = new Date().toISOString().slice(0, 10);
+
+const rowsIGForAccount = igUnfollowRows.filter(row => {
+  if (row.account !== acc.account) return false;
+
+  const rowDate = parseTanggalXLSX(row.tanggal);
+  return rowDate === today;
+});
+
+console.log(`📋 igUnfollow row ${acc.account}:`, rowsIGForAccount.length);
+
+if (rowsIGForAccount.length === 0) {
+  console.log("⏭️ Tidak ada jadwal IG hari ini");
+  continue;
+}
+
 
       const context = await browser.createIncognitoBrowserContext();
       const page = await context.newPage();
@@ -84,6 +130,12 @@ const igUnfollowRows = templates.igUnfollow || [];
 
       await delay(10000); // delay antar akun
     }
+
+    const delayRow = rowsIGForAccount.find(r => r.delay_akun);
+const delayAkun = Number(delayRow?.delay_akun) || 10000;
+
+console.log("🕒 Delay akun:", delayAkun);
+await delay(delayAkun);
 
     await browser.close();
     console.log("🎉 Semua akun selesai");
