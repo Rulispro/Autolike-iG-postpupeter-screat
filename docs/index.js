@@ -189,14 +189,20 @@ if (mode === "Unfollow") {
       console.log(`✅ Selesai akun ${acc.account}`);
 
       await page.close();
-     await context.close();
-      const delayRow = rowsIGForAccount.find(r => r.delay_akun);
-     const delayAkun = Number(delayRow?.delay_akun) || 10000;
-       console.log("🕒 Delay akun:", delayAkun);
-      await delay(delayAkun);
-    
-    }
+      let activeRows = [];
 
+if (mode === "Like") activeRows = rowsIGLikeForAccount;
+if (mode === "FollowFollower") activeRows = rowsIGFollowFollowerForAccount;
+if (mode === "FollowFollowing") activeRows = rowsIGFollowFollowingForAccount;
+if (mode === "Unfollow") activeRows = rowsIGUnfollowForAccount;
+
+const delayRow = activeRows.find(r => r.delay_akun);
+const delayAkun = Number(delayRow?.delay_akun) || 10000;
+
+console.log("🕒 Delay akun:", delayAkun);
+await delay(delayAkun);
+
+     await context.close();
     await browser.close();
     console.log("🎉 Semua akun selesai");
 
