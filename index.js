@@ -98,7 +98,11 @@ if (!success) {
   });
 
   const page = await browser.newPage();
-
+  //MODE MOBILE
+  await page.setUserAgent(
+    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
+  );
+  await page.setViewport({ width: 360, height: 687 });
   await page.setCookie(...cookies);
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
   await page.waitForTimeout(4000);
