@@ -17,8 +17,6 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   for (let i = 0; i < maxLikes; i++) {
 
     const result = await page.evaluate(() => {
-const result = await page.evaluate(() => {
-
   const likeButtons = Array.from(
     document.querySelectorAll('button')
   ).filter(btn =>
