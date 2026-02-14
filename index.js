@@ -1,115 +1,133 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 
+const delay = ms => new Promise(r => setTimeout(r, ms));
 
-// Load cookies
-const raw = fs.readFileSync("./cookies.json", "utf8");
-const cookies = JSON.parse(raw);
-
-// =====================
-// AutoLike Function
-// =====================
-async function autoLike(page, maxLikes = 10, interval = 3000) {
-  console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
-
-  const delay = ms => new Promise(r => setTimeout(r, ms));
-
-  for (let i = 0; i < maxLikes; i++) {
-
-    const result = await page.evaluate(() => {
-      const likes = Array.from(
-        document.querySelectorAll('svg[aria-label="Like"]')
-      );
-
-      if (likes.length === 0) return false;
-
-      const btn = likes[0];
-
-      btn.scrollIntoView({ block: "center" });
-
-      btn.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-      btn.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
-      btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-
-      return true;
-    });
-
-    if (!result) {
-      console.log(`❌ Like ke-${i + 1} gagal, scroll...`);
-      await page.evaluate(() => window.scrollBy(0, 900));
-      await delay(2500);
-      i--;
-      continue;
-    }
-
-    console.log(`❤️ Like ke-${i + 1} berhasil`);
-
-    await delay(interval + Math.random() * 1500);
-    await page.evaluate(() => window.scrollBy(0, 700));
-    await delay(2000);
-  }
-
-  console.log("✅ AutoLike selesai");
+let cookies = [];
+try {
+  cookies = JSON.parse(fs.readFileSync("./cookies.json", "utf8"));
+  console.log("✅ Cookies dimuat");
+} catch (e) {
+  console.error("❌ Gagal baca cookies.json:", e.message);
+  process.exit(1);
 }
-
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    headless: true, // ganti false kalau mau lihat browser
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
 
   const page = await browser.newPage();
-  //MODE MOBILE
+
+  // Mode mobile
   await page.setUserAgent(
     "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
   );
-  await page.setViewport({ width: 360, height: 687 });
+  await page.setViewport({ width: 412, height: 915 });
+
   await page.setCookie(...cookies);
-  await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
-  console.log("Current URL:", page.url());
-  await page.waitForTimeout(4000);
 
-  // DEBUG SVG
-const count = await page.evaluate(() => {
-  return document.querySelectorAll("svg").length;
+  const username = "sendy81a"; // ganti username target
+  const followingUrl = `https://www.instagram.com/${username}/following/`;
+
+  // Buka halaman following
+  await page.goto(followingUrl, { waitUntil: "networkidle2" });
+  console.log("✅ Halaman following terbuka");
+  await delay(3000);
+
+  // Scroll dan ambil semua tombol "Diikuti / Following"
+  let buttonsClicked = 0;
+  let moreButtons = true;
+
+  while (moreButtons) {
+    // Ambil semua tombol visible
+    const btnIndexes = await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"))
+        .filter(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null);
+      return btns.map((_, idx) => idx);
+    });
+
+    if (btnIndexes.length === 0) {
+      moreButtons = false;
+      break;
+    }
+
+    for (let i = 0; i < btnIndexes.length; i++) {
+      buttonsClicked++;
+      const clicked = await page.evaluate(idx => {
+        const btns = Array.from(document.querySelectorAll("button"))
+          .filter(b => /Diikuti|Following/i.test(b.innerText) && b.offsetParent !== null);
+        if (btns[idx]) {
+          btns[idx].scrollIntoView();
+          btns[idx].click();
+          // Tunggu popup muncul sebentar
+        
+
+          return true;
+        }
+        return false;
+      }, i);
+
+      if (!clicked) continue;
+      console.log(`🔘 Klik tombol Diikuti #${buttonsClicked}`);
+  // Tunggu popup muncul sebentar
+    await delay(1500); // bisa ditambah jadi 2000 kalau perlu
+
+      
+      // Tunggu popup muncul
+      try {
+        await page.waitForSelector('div[role="dialog"] button', { visible: true, timeout: 5000 });
+      } catch {}
+
+      // Tunggu popup muncul dulu
+await delay(1500);
+
+// Klik tombol Batal Mengikuti / Unfollow pakai selector spesifik
+const unfollowClicked = await page.evaluate(() => {
+  const btn = Array.from(document.querySelectorAll('button._a9--._ap36._a9-_'))
+    .find(b => /Batal mengikuti|Unfollow/i.test(b.innerText));
+  if(btn){
+    btn.scrollIntoView();
+    btn.click();
+    return true;
+  }
+  return false;
 });
-console.log("Total SVG di halaman:", count);
 
-const likeCount = await page.evaluate(() => {
-  return document.querySelectorAll('svg[aria-label="Like"]').length;
-});
-console.log("Total Like button:", likeCount);
-  const debug = await page.evaluate(() => {
-  return Array.from(
-    document.querySelectorAll('svg[aria-label="Suka"]')
-  ).length;
-});
-console.log("Total tombol suka:", debug);
+if(unfollowClicked) console.log(`❌ Konfirmasi Unfollow diklik #${buttonsClicked}`);
+else {
+  console.log(`⚠️ Tombol konfirmasi Unfollow tidak ditemukan #${buttonsClicked}`);
 
+  // Debug tombol di popup
+  const dialogButtons = await page.evaluate(() => {
+    const dialog = document.querySelector('div[role="dialog"]');
+    if (!dialog) return [];
+    return Array.from(dialog.querySelectorAll("button"))
+      .map(b => ({ text: b.innerText, class: b.className }));
+  });
+  console.log("🔹 Tombol di popup:", dialogButtons);
+}
+      
 
-const isLogin = await page.evaluate(() => {
-  return document.body.innerText.includes("Log in") === false;
-});
+      await delay(3000);
+      
+    // Debug semua div (opsional, kalau Unfollow tidak ditemukan)
+const allDivs = await page.evaluate(() => 
+  Array.from(document.querySelectorAll('div')).map(d => ({
+    text: d.innerText,
+    className: d.className
+  }))
+);
+console.log("🔹 Semua div:", allDivs);
 
-console.log("Status login:", isLogin ? "LOGIN" : "BELUM LOGIN");
-  
-      const debugLike = await page.evaluate(() => {
-  const articles = document.querySelectorAll("article");
-  return articles.length;
-});
+    }
 
-console.log("Total article:", debugLike);
-  
-const debuging = await page.evaluate(() => {
-  return Array.from(document.querySelectorAll('[role="button"]'))
-    .map(b => b.getAttribute("aria-label"))
-    .filter(Boolean);
-});
+    // Scroll ke bawah untuk load tombol baru
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+    await delay(4000);
+  }
 
-console.log("DEBUG BUTTONS:", debug);
-
-  await autoLike(page, 10, 3000);
-
+  console.log("✅ Selesai proses unfollow semua tombol visible");
   await browser.close();
 })();
