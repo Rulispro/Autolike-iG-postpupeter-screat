@@ -18,42 +18,31 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
     // === Cara 1: evaluate click ===
     try {
-      success = await page.evaluate(() => {
-  const svg = document.querySelector('svg[aria-label="Suka"]');
-  if (!svg) return false;
+  const element = await page.$('button svg[aria-label="Suka"]');
 
-  const button = svg.closest("button");
-  if (!button) return false;
+  if (element) {
+    const parent = await element.evaluateHandle(el => el.closest("button"));
+    const btn = parent.asElement();
 
-  button.scrollIntoView({ block: "center" });
-  return true;
-});
+    if (btn) {
+      await btn.scrollIntoView();
+      await page.waitForTimeout(500);
 
-if (success) {
-  const element = await page.$('svg[aria-label="Suka"]');
-  const parent = await element.evaluateHandle(el => el.closest("button"));
-  const btn = parent.asElement();
-
-  if (btn) {
-    const box = await btn.boundingBox();
-    if (box) {
-      await page.touchscreen.tap(
-        box.x + box.width / 2,
-        box.y + box.height / 2
-      );
-      success = true;
+      const box = await btn.boundingBox();
+      if (box) {
+        await page.touchscreen.tap(
+          box.x + box.width / 2,
+          box.y + box.height / 2
+        );
+        success = true;
+        console.log(`❤️ Like ke-${i + 1}`);
+      }
     }
   }
-}
-
-
-
-      if (success) {
-        console.log(`❤️ (evaluate) Like ke-${i + 1}`);
-      }
-    } catch (e) {
-      console.log("⚠️ Evaluate error:", e.message);
+} catch (e) {
+  console.log("⚠️ Like error:", e.message);
     }
+    
 
     // === Cara 2: fallback pakai puppeteer click ===
 if (!success) {
