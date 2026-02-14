@@ -18,30 +18,29 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
     // === Cara 1: evaluate click ===
     try {
-  const element = await page.$('button svg[aria-label="Suka"]');
+  coconst success = await page.evaluate(() => {
+  const buttons = Array.from(
+    document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')
+  );
 
-  if (element) {
-    const parent = await element.evaluateHandle(el => el.closest("button"));
-    const btn = parent.asElement();
+  for (const svg of buttons) {
+    const btn = svg.closest('div[role="button"]');
+    if (!btn) continue;
 
-    if (btn) {
-      await btn.scrollIntoView();
-      await page.waitForTimeout(500);
+    btn.scrollIntoView({ block: "center" });
 
-      const box = await btn.boundingBox();
-      if (box) {
-        await page.touchscreen.tap(
-          box.x + box.width / 2,
-          box.y + box.height / 2
-        );
-        success = true;
-        console.log(`❤️ Like ke-${i + 1}`);
-      }
-    }
+    btn.dispatchEvent(new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      view: window
+    }));
+
+    return true; // klik satu saja
   }
-} catch (e) {
-  console.log("⚠️ Like error:", e.message);
-    }
+
+  return false;
+});
+
     
 
     // === Cara 2: fallback pakai puppeteer click ===
