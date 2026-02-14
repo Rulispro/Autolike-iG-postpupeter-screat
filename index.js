@@ -19,21 +19,33 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     // === Cara 1: evaluate click ===
     try {
       success = await page.evaluate(() => {
-  const likeButtons = document.querySelectorAll(
-    'button svg[aria-label="Suka"]'
-  );
+  conssuccess = await page.evaluate(() => {
+  const svg = document.querySelector('svg[aria-label="Suka"]');
+  if (!svg) return false;
 
-  for (let svg of likeButtons) {
-    const button = svg.closest("button");
-    if (!button) continue;
+  const button = svg.closest("button");
+  if (!button) return false;
 
-    button.scrollIntoView({ block: "center" });
-    button.click();
-    return true;
-  }
-
-  return false;
+  button.scrollIntoView({ block: "center" });
+  return true;
 });
+
+if (success) {
+  const element = await page.$('svg[aria-label="Suka"]');
+  const parent = await element.evaluateHandle(el => el.closest("button"));
+  const btn = parent.asElement();
+
+  if (btn) {
+    const box = await btn.boundingBox();
+    if (box) {
+      await page.touchscreen.tap(
+        box.x + box.width / 2,
+        box.y + box.height / 2
+      );
+      success = true;
+    }
+  }
+}
 
 
 
