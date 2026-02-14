@@ -6,7 +6,8 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "puppeteer": "^23.0.2",
-    "puppeteer-screen-recorder": "^3.0.0"
+    "puppeteer": "19.0.0",
+    "puppeteer-screen-recorder": "3.0.6"
   }
 }
+
