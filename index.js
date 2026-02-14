@@ -17,22 +17,25 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   for (let i = 0; i < maxLikes; i++) {
     // 1️⃣ Cari tombol Like/Suka yang belum diklik
     const result = await page.evaluate(() => {
-      const likeButtons = Array.from(
-        document.querySelectorAll('article button')
-      ).filter(btn => {
-        // cek aria-label atau SVG title
-        const aria = btn.querySelector('svg')?.getAttribute('aria-label');
-        return aria === 'Like' || aria === 'Suka';
-      });
+  const buttons = Array.from(
+    document.querySelectorAll('[role="button"]')
+  );
 
-      if (likeButtons.length === 0) return false;
+  for (const btn of buttons) {
+    const label = btn.getAttribute("aria-label");
 
-      // klik tombol pertama
-      const btn = likeButtons[0];
-      btn.scrollIntoView({ block: 'center' });
-      btn.click(); // klik langsung, lebih reliable
+    if (!label) continue;
+
+    if (label.includes("Like") || label.includes("Suka")) {
+      btn.scrollIntoView({ block: "center" });
+      btn.click();
       return true;
-    });
+    }
+  }
+
+  return false;
+});
+
 
     // 2️⃣ Jika tombol tidak ditemukan, scroll ke bawah dan tunggu
     if (!result) {
@@ -104,6 +107,14 @@ console.log("Status login:", isLogin ? "LOGIN" : "BELUM LOGIN");
 });
 
 console.log("Total article:", debugLike);
+  
+const debug = await page.evaluate(() => {
+  return Array.from(document.querySelectorAll('[role="button"]'))
+    .map(b => b.getAttribute("aria-label"))
+    .filter(Boolean);
+});
+
+console.log("DEBUG BUTTONS:", debug);
 
   await autoLike(page, 10, 3000);
 
