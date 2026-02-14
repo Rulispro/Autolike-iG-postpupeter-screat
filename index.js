@@ -18,7 +18,7 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
     // === Cara 1: evaluate click ===
     try {
-  coconst success = await page.evaluate(() => {
+  const success = await page.evaluate(() => {
   const buttons = Array.from(
     document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')
   );
