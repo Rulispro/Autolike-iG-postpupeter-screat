@@ -21,7 +21,7 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     // Ambil semua svg "Suka" dan ambil parent button-nya
     const buttons = Array.from(
       document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')
-    ).map(svg => svg.closest('div[role="button"]'));
+    )
 
     if (!buttons.length) return { status: false, reason: "Tidak ada tombol Suka" };
 
