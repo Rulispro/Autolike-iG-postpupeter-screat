@@ -203,6 +203,8 @@ console.log("🕒 Delay akun:", delayAkun);
 await delay(delayAkun);
 
      await context.close();
+ }
+    
     await browser.close();
     console.log("🎉 Semua akun selesai");
 
