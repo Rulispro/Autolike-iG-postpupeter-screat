@@ -1,5 +1,10 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
+const count = await page.evaluate(() => {
+  return document.querySelectorAll("svg").length;
+});
+console.log("Total SVG:", count);
+
 
 // Load cookies
 const raw = fs.readFileSync("./cookies.json", "utf8");
