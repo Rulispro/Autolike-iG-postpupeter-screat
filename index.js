@@ -55,7 +55,7 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
     );
     
     //BACA SEKALI
-    const TEMPLATE_PATH = "./docs/template_ig.xlsx";
+    const TEMPLATE_PATH = "./docs/templateIG.xlsx";
 
 if (!fs.existsSync(TEMPLATE_PATH)) {
   throw new Error("❌ template_ig.xlsx tidak ditemukan");
