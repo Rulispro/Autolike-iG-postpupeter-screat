@@ -51,7 +51,7 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
   //  }
 
     const accounts = JSON.parse(
-      fs.readFileSync("./accounts.json", "utf8")
+      fs.readFileSync(".docs/accounts.json", "utf8")
     );
     
     //BACA SEKALI
