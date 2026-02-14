@@ -45,10 +45,10 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
     const mode = process.argv[2];
     console.log("🎯 MODE:", mode);
 
-    if (!mode) {
-      console.log("⚠️ Tidak ada mode → stop");
-      process.exit(0);
-    }
+  //  if (!mode) {
+    //  console.log("⚠️ Tidak ada mode → stop");
+     // process.exit(0);
+  //  }
 
     const accounts = JSON.parse(
       fs.readFileSync("./accounts.json", "utf8")
