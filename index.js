@@ -22,7 +22,7 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
       for (const article of articles) {
 
-        const svgLike = article.querySelector('svg[aria-label="Suka"]');
+        const svgLike = article.querySelector('svg[aria-label="Like"]');
 
         if (svgLike) {
           const button = svgLike.closest("button");
