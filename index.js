@@ -17,46 +17,44 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     let success = false;
 
     // === Cara 1: evaluate click ===
-    try {
-  const success = await page.evaluate(() => {
-    try {
-      const buttons = Array.from(
-        document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')?.closest('div[role="button"]');
-      );
+    
+  
+    const success = await page.evaluate(() => {
+  try {
+    // Ambil semua svg "Suka" dan ambil parent button-nya
+    const buttons = Array.from(
+      document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')
+    ).map(svg => svg.closest('div[role="button"]'));
 
-      if (!buttons.length) return { status: false, reason: "Tidak ada tombol Suka" };
+    if (!buttons.length) return { status: false, reason: "Tidak ada tombol Suka" };
 
-      for (const svg of buttons) {
-        
-        if (!btn) continue;
+    for (const btn of buttons) {
+      if (!btn) continue;
 
-        btn.scrollIntoView({ block: "center" });
+      btn.scrollIntoView({ block: "center" });
 
-        btn.dispatchEvent(new MouseEvent("click", {
-          bubbles: true,
-          cancelable: true,
-          view: window
-        }));
+      btn.dispatchEvent(new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        view: window
+      }));
 
-        return { status: true };
-      }
-
-      return { status: false, reason: "Button parent tidak ditemukan" };
-
-    } catch (err) {
-      return { status: false, reason: err.message };
+      return { status: true };
     }
-  });
 
-  if (success.status) {
-    console.log(`❤️ Like ke-${i + 1}`);
-  } else {
-    console.log(`❌ Like gagal: ${success.reason}`);
+    return { status: false, reason: "Button parent tidak ditemukan" };
+
+  } catch (err) {
+    return { status: false, reason: err.message };
   }
+});
 
-} catch (e) {
-  console.log("⚠️ Evaluate error:", e.message);
+if (success.status) {
+  console.log(`❤️ Like berhasil`);
+} else {
+  console.log(`❌ Like gagal: ${success.reason}`);
 }
+
 
 
 
