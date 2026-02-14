@@ -19,39 +19,33 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     // === Cara 1: evaluate click ===
     const success = await page.evaluate(() => {
   try {
-    // Ambil semua svg "Suka" dan ambil parent button-nya
-    const buttons = Array.from(
-      document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')
-    )
+    const svgs = Array.from(
+      document.querySelectorAll('svg[aria-label="Suka"]')
+    );
 
-    if (!buttons.length) return { status: false, reason: "Tidak ada tombol Suka" };
+    if (!svgs.length)
+      return { status: false, reason: "Tidak ada tombol Suka" };
 
-    for (const btn of buttons) {
+    for (const svg of svgs) {
+      const btn =
+        svg.closest('button') ||
+        svg.closest('div[role="button"]') ||
+        svg.parentElement;
+
       if (!btn) continue;
 
       btn.scrollIntoView({ block: "center" });
 
-      btn.dispatchEvent(new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window
-      }));
+      btn.click(); // lebih aman daripada dispatchEvent
 
       return { status: true };
     }
 
-    return { status: false, reason: "Button parent tidak ditemukan" };
-
+    return { status: false, reason: "Parent tidak ditemukan" };
   } catch (err) {
     return { status: false, reason: err.message };
   }
 });
-
-if (success.status) {
-  console.log(`❤️ Like berhasil`);
-} else {
-  console.log(`❌ Like gagal: ${success.reason}`);
-}
 
 
 
@@ -124,6 +118,17 @@ const count = await page.evaluate(() => {
   return document.querySelectorAll("svg").length;
 });
 console.log("Total SVG di halaman:", count);
+
+const likeCount = await page.evaluate(() => {
+  return document.querySelectorAll('svg[aria-label="Like"]').length;
+});
+console.log("Total Like button:", likeCount);
+  const debug = await page.evaluate(() => {
+  return Array.from(
+    document.querySelectorAll('svg[aria-label="Suka"]')
+  ).length;
+});
+console.log("Total tombol suka:", debug);
 
 
 const isLogin = await page.evaluate(() => {
