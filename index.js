@@ -17,42 +17,37 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   for (let i = 0; i < maxLikes; i++) {
     
     // === Cara 1: evaluate click ===
-    const success = await page.evaluate(() => {
+    const result = await page.evaluate(() => {
   try {
     const svgs = Array.from(
-      document.querySelectorAll('svg[aria-label="Suka"]')
+      document.querySelectorAll('svg[aria-label="Like"]')
     );
 
     if (!svgs.length)
-      return { status: false, reason: "Tidak ada tombol Suka" };
+      return { status: false };
 
     for (const svg of svgs) {
       const btn =
-        svg.closest('button') ||
-        svg.closest('div[role="button"]') ||
-        svg.parentElement;
+        svg.closest("button") ||
+        svg.closest('div[role="button"]');
 
       if (!btn) continue;
 
       btn.scrollIntoView({ block: "center" });
-
-      btn.click(); // lebih aman daripada dispatchEvent
+      btn.click();
 
       return { status: true };
     }
 
-    return { status: false, reason: "Parent tidak ditemukan" };
+    return { status: false };
   } catch (err) {
-    return { status: false, reason: err.message };
+    return { status: false };
   }
 });
 
+let success = result.status;
 
-
-
-    
-
-    // === Cara 2: fallback pakai puppeteer click ===
+// === Cara 2: fallback pakai puppeteer click ===
 if (!success) {
   try {
     const btnHandle = await page.$(
