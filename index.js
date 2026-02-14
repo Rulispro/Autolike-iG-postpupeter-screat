@@ -89,7 +89,7 @@ if (!success) {
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: new,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
@@ -97,7 +97,14 @@ if (!success) {
 
   await page.setCookie(...cookies);
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
+  await page.waitForTimeout(4000);
 
+const isLogin = await page.evaluate(() => {
+  return document.body.innerText.includes("Log in") === false;
+});
+
+console.log("Status login:", isLogin ? "LOGIN" : "BELUM LOGIN");
+      
   await autoLike(page, 10, 3000);
 
   await browser.close();
