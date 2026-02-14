@@ -106,6 +106,7 @@ if (rowsIGForAccount.length === 0) {
       const context = await browser.createIncognitoBrowserContext();
       const page = await context.newPage();
 
+      await page.setBypassCSP(true); 
       // Mobile mode
       await page.setUserAgent(
         "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 " +
