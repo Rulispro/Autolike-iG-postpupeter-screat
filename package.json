@@ -7,5 +7,6 @@
   },
   "dependencies": {
     "puppeteer": "^23.0.2"
+    "puppeteer-screen-recorder": "^3.0.0"
   }
 }
