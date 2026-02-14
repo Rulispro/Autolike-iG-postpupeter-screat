@@ -14,11 +14,8 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   const delay = ms => new Promise(r => setTimeout(r, ms));
 
   for (let i = 0; i < maxLikes; i++) {
-    let success = false;
-
-    // === Cara 1: evaluate click ===
     
-  
+    // === Cara 1: evaluate click ===
     const success = await page.evaluate(() => {
   try {
     // Ambil semua svg "Suka" dan ambil parent button-nya
