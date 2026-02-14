@@ -1,9 +1,5 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-const count = await page.evaluate(() => {
-  return document.querySelectorAll("svg").length;
-});
-console.log("Total SVG:", count);
 
 
 // Load cookies
@@ -122,6 +118,13 @@ if (!success) {
   await page.setCookie(...cookies);
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
   await page.waitForTimeout(4000);
+
+  // DEBUG SVG
+const count = await page.evaluate(() => {
+  return document.querySelectorAll("svg").length;
+});
+console.log("Total SVG di halaman:", count);
+
 
 const isLogin = await page.evaluate(() => {
   return document.body.innerText.includes("Log in") === false;
