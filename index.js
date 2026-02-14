@@ -108,7 +108,7 @@ console.log("Status login:", isLogin ? "LOGIN" : "BELUM LOGIN");
 
 console.log("Total article:", debugLike);
   
-const debug = await page.evaluate(() => {
+const debuging = await page.evaluate(() => {
   return Array.from(document.querySelectorAll('[role="button"]'))
     .map(b => b.getAttribute("aria-label"))
     .filter(Boolean);
