@@ -17,25 +17,32 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   for (let i = 0; i < maxLikes; i++) {
 
     const result = await page.evaluate(() => {
+const result = await page.evaluate(() => {
 
-      const articles = document.querySelectorAll("article");
+  const likeButtons = Array.from(
+    document.querySelectorAll('button')
+  ).filter(btn =>
+    btn.innerHTML.includes('aria-label="Like"')
+  );
 
-      for (const article of articles) {
+  for (const btn of likeButtons) {
 
-        const svgLike = article.querySelector('svg[aria-label="Like"]');
+    const box = await button.boundingBox();
+await page.mouse.click(box.x + box.width/2, box.y + box.height/2);
 
-        if (svgLike) {
-          const button = svgLike.closest("button");
-          if (button) {
-            button.scrollIntoView({ block: "center" });
-            button.click();
-            return true;
-          }
-        }
-      }
+      btn.scrollIntoView({ block: "center" });
 
-      return false;
-    });
+      btn.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      btn.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+      btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+      return true;
+    }
+  }
+
+  return false;
+});
+
 
     if (!result) {
       console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
