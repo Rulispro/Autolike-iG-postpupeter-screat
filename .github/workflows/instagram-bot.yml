@@ -29,7 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-     
+      - name: Install recorder only in CI
+        run: npm install puppeteer-screen-recorder
+
       - name: Run Puppeteer bot
         run: npm start
         env:
