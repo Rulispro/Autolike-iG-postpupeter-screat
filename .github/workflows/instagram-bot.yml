@@ -2,8 +2,8 @@ name: Instagram Bot
 
 on:
   workflow_dispatch:   # bisa dijalankan manual dari tab Actions
-  schedule:
-    - cron: "0 7 * * *"   # jalan tiap hari jam 07:00 UTC
+  #schedule:
+   # - cron: "0 7 * * *"   # jalan tiap hari jam 07:00 UTC
 
 jobs:
   run-bot:
