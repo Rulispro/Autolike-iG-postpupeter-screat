@@ -19,27 +19,45 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     // === Cara 1: evaluate click ===
     try {
   const success = await page.evaluate(() => {
-  const buttons = Array.from(
-    document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')
-  );
+    try {
+      const buttons = Array.from(
+        document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')
+      );
 
-  for (const svg of buttons) {
-    const btn = svg.closest('div[role="button"]');
-    if (!btn) continue;
+      if (!buttons.length) return { status: false, reason: "Tidak ada tombol Suka" };
 
-    btn.scrollIntoView({ block: "center" });
+      for (const svg of buttons) {
+        const btn = svg.closest('div[role="button"]');
+        if (!btn) continue;
 
-    btn.dispatchEvent(new MouseEvent("click", {
-      bubbles: true,
-      cancelable: true,
-      view: window
-    }));
+        btn.scrollIntoView({ block: "center" });
 
-    return true; // klik satu saja
+        btn.dispatchEvent(new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        }));
+
+        return { status: true };
+      }
+
+      return { status: false, reason: "Button parent tidak ditemukan" };
+
+    } catch (err) {
+      return { status: false, reason: err.message };
+    }
+  });
+
+  if (success.status) {
+    console.log(`❤️ Like ke-${i + 1}`);
+  } else {
+    console.log(`❌ Like gagal: ${success.reason}`);
   }
 
-  return false;
-});
+} catch (e) {
+  console.log("⚠️ Evaluate error:", e.message);
+}
+
 
     
 
