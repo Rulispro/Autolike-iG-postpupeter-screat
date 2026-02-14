@@ -15,47 +15,41 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   const delay = ms => new Promise(r => setTimeout(r, ms));
 
   for (let i = 0; i < maxLikes; i++) {
-    
-    // === Cara 1: evaluate click ===
-   const result = await page.evaluate(() => {
-  const posts = Array.from(document.querySelectorAll("article"));
 
-  for (const post of posts) {
-    const buttons = post.querySelectorAll("button");
+    const result = await page.evaluate(() => {
 
-    for (const btn of buttons) {
-      const svg = btn.querySelector("svg");
-      if (!svg) continue;
+      const articles = document.querySelectorAll("article");
 
-      const viewBox = svg.getAttribute("viewBox");
+      for (const article of articles) {
 
-      // Icon heart Instagram selalu viewBox 0 0 24 24
-      if (viewBox === "0 0 24 24") {
-        btn.scrollIntoView({ block: "center" });
-        btn.click();
-        return { status: true };
+        const svgLike = article.querySelector('svg[aria-label="Suka"]');
+
+        if (svgLike) {
+          const button = svgLike.closest("button");
+          if (button) {
+            button.scrollIntoView({ block: "center" });
+            button.click();
+            return true;
+          }
+        }
       }
-    }
-  }
 
-  return { status: false };
-});
+      return false;
+    });
 
-
-    // === Kalau gagal total → scroll cari postingan baru ===
-    if (!result.status) {
+    if (!result) {
       console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
-      await page.evaluate(() => window.scrollBy(0, 600));
-      await delay(2000);
+      await page.evaluate(() => window.scrollBy(0, 900));
+      await delay(2500);
       continue;
     }
 
-    // Delay antar klik
-    await delay(interval);
+    console.log(`❤️ Like ke-${i + 1} berhasil`);
 
-    // Scroll supaya muncul postingan berikutnya
-    await page.evaluate(() => window.scrollBy(0, 500));
-    await delay(1500);
+    await delay(interval + Math.random() * 1500); // random delay biar natural
+
+    await page.evaluate(() => window.scrollBy(0, 700));
+    await delay(2000);
   }
 
   console.log("✅ AutoLike selesai");
