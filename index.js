@@ -1,3 +1,10 @@
+const puppeteer = require("puppeteer");
+const fs = require("fs");
+
+// Load cookies
+const raw = fs.readFileSync("./cookies.json", "utf8");
+const cookies = JSON.parse(raw);
+
 // =====================
 // AutoLike Function
 // =====================
