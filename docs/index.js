@@ -66,7 +66,7 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
     const likeRows = templates.LIKE || [];
     const followFollowersRows = templates.FOLLOWFOLLOWER || [];
     const followFollowingsRows = templates.FOLLOWFOLLOWING || [];
-    const addFriendFollowingRows = templates.UNFOLLOW || [];
+    const igUnfollowRows = templates.UNFOLLOW || [];
 
     
 
