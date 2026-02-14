@@ -21,13 +21,13 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
   const success = await page.evaluate(() => {
     try {
       const buttons = Array.from(
-        document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')
+        document.querySelectorAll('div[role="button"] svg[aria-label="Suka"]')?.closest('div[role="button"]');
       );
 
       if (!buttons.length) return { status: false, reason: "Tidak ada tombol Suka" };
 
       for (const svg of buttons) {
-        const btn = svg.closest('div[role="button"]');
+        
         if (!btn) continue;
 
         btn.scrollIntoView({ block: "center" });
@@ -57,6 +57,7 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 } catch (e) {
   console.log("⚠️ Evaluate error:", e.message);
 }
+
 
 
     
