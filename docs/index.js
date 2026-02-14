@@ -106,28 +106,71 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
 
      
       const today = new Date().toISOString().slice(0, 10);
+
+      //FILTER LIKE
+      const rowsIGLikeForAccount = likeRows.filter(row => {
+  if (row.account !== acc.account) return false;
+
+  const rowDate = parseTanggalXLSX(row.tanggal);
+  return rowDate === today;
+});
+      //FILTER FOLLOWERS 
+  const rowsIGFollowFollowerForAccount = followFollowersRows.filter(row => {
+  if (row.account !== acc.account) return false;
+
+  const rowDate = parseTanggalXLSX(row.tanggal);
+  return rowDate === today;
+});
+      //FILTER FOLLOWFOLLOWING
+  const rowsIGFollowFollowingForAccount = followFollowingsRows.filter(row => {
+  if (row.account !== acc.account) return false;
+
+  const rowDate = parseTanggalXLSX(row.tanggal);
+  return rowDate === today;
+});
       //FILTER IG UNFOLLOW 
- const rowsIGForAccount = igUnfollowRows.filter(row => {
+ const rowsIGUnfollowForAccount = igUnfollowRows.filter(row => {
   if (row.account !== acc.account) return false;
 
   const rowDate = parseTanggalXLSX(row.tanggal);
   return rowDate === today;
 });
 
-console.log(`📋 Igunfollow row ${acc.account}:`, rowsIGForAccount.length);
-//console.log(`📋 Status row ${acc.account}:`, rowsStatusForAccount.length);
-//console.log(`📋 addFriendFollowers row ${acc.account}:`, rowsAddFriendFollowersForAccount.length);
-//console.log(`📋 addFriendFollowings row ${acc.account}:`, rowsAddFriendFollowingForAccount.length); 
+console.log(`📋 likeRows row ${acc.account}:`, rowsIGLikeForAccount.length);
+console.log(`📋 followFollowersRows row ${acc.account}:`, rowsIGFollowFollowerForAccount.length);
+console.log(`📋 followFollowingsRows row ${acc.account}:`, rowsIGFollowFollowingForAccount.length);
+console.log(`📋 igUnfollowRows row ${acc.account}:`, rowsIGUnfollowForAccount.length); 
 //console.log(`📋 addFriendListRows row ${acc.account}:`, rowsAddFriendFriendsForAccount.length);
 //console.log(`📋 undfriend row ${acc.account}:`, rowsUndfriendForAccount.length);
-    if (rowsIGForAccount.length === 0) {
+    if (rowsIGLikeForAccount.length === 0 && rowsIGFollowFollowerForAccount.length === 0 && rowsIGFollowFollowingForAccount.length === 0 && rowsIGUnfollowForAccount.length === 0) {
   console.log("⏭️ Tidak ada jadwal IG hari ini");
   continue;
 }
+     //LAKUKAN LIKE
+      if (mode === "Like") {
 
-if (mode === "igunfollow") {
+  for (const row of rowsIGLikeForAccount) {
+    await runLike(page, row);
+  }
+}
+     //LAKUKAN FOLLOW FOLLOWER
+      if (mode === "FollowFollower") {
 
-  for (const row of rowsIGForAccount) {
+  for (const row of rowsIGFollowFollowerForAccount) {
+    await runFollowFollower(page, row);
+  }
+}
+      //LAKUKAN FOLLOW FOLOWING
+      if (mode === "FollowFollowing") {
+
+  for (const row of rowsIGFollowFollowingForAccount) {
+    await runFollowaFollowing(page, row);
+  }
+}
+   //, LAKUKAN UNFOLLOW  
+if (mode === "Unfollow") {
+
+  for (const row of rowsIGUnfollowForAccount) {
     await runIGUnfollow(page, row.target_username);
   }
 }
