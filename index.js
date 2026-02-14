@@ -19,21 +19,25 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     // === Cara 1: evaluate click ===
     try {
       success = await page.evaluate(() => {
-        const btn = [...document.querySelectorAll("svg")]
-          .find(el =>
-            el.getAttribute("aria-label") === "Like" ||
-            el.getAttribute("aria-label") === "Suka"
-          );
+  const articles = document.querySelectorAll("article");
 
-        if (!btn) return false;
+  for (let article of articles) {
+    const likeSvg = article.querySelector('svg[aria-label="Suka"]');
 
-        const button = btn.closest("button");
-        if (!button) return false;
+    if (!likeSvg) continue;
 
-        button.scrollIntoView({ behavior: "smooth", block: "center" });
-        button.click();
-        return true;
-      });
+    const button = likeSvg.closest("button");
+    if (!button) continue;
+
+    button.scrollIntoView({ block: "center" });
+    button.click();
+
+    return true;
+  }
+
+  return false;
+});
+
 
       if (success) {
         console.log(`❤️ (evaluate) Like ke-${i + 1}`);
