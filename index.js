@@ -46,18 +46,17 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     if (!success) {
       try {
         const btnHandle = await page.$("svg[aria-label='Like'], svg[aria-label='Suka']");
-        if (btnHandle) {
-          const button = await btnHandle.evaluateHandle(el => el.closest("button"));
-          if (button) {
-            await button.click();
-            success = true;
-            console.log(`❤️ (puppeteer.click) Like ke-${i + 1}`);
-          }
-        }
-      } catch (e) {
-        console.log("⚠️ Puppeteer click error:", e.message);
-      }
-    }
+if (btnHandle) {
+  const buttonHandle = await btnHandle.evaluateHandle(el => el.closest("button"));
+  const elementHandle = buttonHandle.asElement(); // 🔥 ini kuncinya
+
+  if (elementHandle) {
+    await elementHandle.click();
+    success = true;
+    console.log(`❤️ (puppeteer.click) Like ke-${i + 1}`);
+  }
+}
+
 
     // === Kalau gagal total → scroll cari postingan baru ===
     if (!success) {
