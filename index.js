@@ -19,7 +19,6 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     // === Cara 1: evaluate click ===
     try {
       success = await page.evaluate(() => {
-  conssuccess = await page.evaluate(() => {
   const svg = document.querySelector('svg[aria-label="Suka"]');
   if (!svg) return false;
 
