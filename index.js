@@ -18,26 +18,29 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
     
     // === Cara 1: evaluate click ===
   const result = await page.evaluate(() => {
+  const result = await page.evaluate(() => {
   const posts = Array.from(document.querySelectorAll("article"));
 
   for (const post of posts) {
-    const likeBtn = post.querySelector('svg[aria-label="Like"]');
+    const buttons = post.querySelectorAll("button");
 
-    if (likeBtn) {
-      const btn = likeBtn.closest("button");
-      if (!btn) continue;
+    for (const btn of buttons) {
+      const svg = btn.querySelector("svg");
+      if (!svg) continue;
 
-      btn.scrollIntoView({ behavior: "smooth", block: "center" });
-      btn.click();
+      const viewBox = svg.getAttribute("viewBox");
 
-      return { status: true };
+      // Icon heart Instagram selalu viewBox 0 0 24 24
+      if (viewBox === "0 0 24 24") {
+        btn.scrollIntoView({ block: "center" });
+        btn.click();
+        return { status: true };
+      }
     }
   }
 
   return { status: false };
 });
-
-let success = result.status;
 
 
     // === Kalau gagal total → scroll cari postingan baru ===
@@ -73,6 +76,7 @@ let success = result.status;
   await page.setViewport({ width: 360, height: 687 });
   await page.setCookie(...cookies);
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
+  console.log("Current URL:", page.url());
   await page.waitForTimeout(4000);
 
   // DEBUG SVG
@@ -98,7 +102,14 @@ const isLogin = await page.evaluate(() => {
 });
 
 console.log("Status login:", isLogin ? "LOGIN" : "BELUM LOGIN");
-      
+  
+      const debugLike = await page.evaluate(() => {
+  const articles = document.querySelectorAll("article");
+  return articles.length;
+});
+
+console.log("Total article:", debugLike);
+
   await autoLike(page, 10, 3000);
 
   await browser.close();
