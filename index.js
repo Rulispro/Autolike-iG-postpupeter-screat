@@ -9,56 +9,55 @@ const cookies = JSON.parse(raw);
 // =====================
 // AutoLike Function
 // =====================
-async function autoLike(page, maxLikes = 10, interval = 3000) {
+
+      return true;
+}async function autoLike(page, maxLikes = 10, interval = 3000) {
   console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
   const delay = ms => new Promise(r => setTimeout(r, ms));
 
   for (let i = 0; i < maxLikes; i++) {
-
+    // 1️⃣ Cari tombol Like/Suka yang belum diklik
     const result = await page.evaluate(() => {
-  const likeButtons = Array.from(
-    document.querySelectorAll('button')
-  ).filter(btn =>
-    btn.innerHTML.includes('aria-label="Like"')
-  );
+      const likeButtons = Array.from(
+        document.querySelectorAll('article button')
+      ).filter(btn => {
+        // cek aria-label atau SVG title
+        const aria = btn.querySelector('svg')?.getAttribute('aria-label');
+        return aria === 'Like' || aria === 'Suka';
+      });
 
-  for (const btn of likeButtons) {
+      if (likeButtons.length === 0) return false;
 
-    const box = await button.boundingBox();
-await page.mouse.click(box.x + box.width/2, box.y + box.height/2);
-
-      btn.scrollIntoView({ block: "center" });
-
-      btn.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-      btn.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
-      btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-
+      // klik tombol pertama
+      const btn = likeButtons[0];
+      btn.scrollIntoView({ block: 'center' });
+      btn.click(); // klik langsung, lebih reliable
       return true;
-    }
-  }
+    });
 
-  return false;
-});
-
-
+    // 2️⃣ Jika tombol tidak ditemukan, scroll ke bawah dan tunggu
     if (!result) {
       console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
       await page.evaluate(() => window.scrollBy(0, 900));
       await delay(2500);
+      i--; // ulangi loop untuk like yang sama
       continue;
     }
 
     console.log(`❤️ Like ke-${i + 1} berhasil`);
 
-    await delay(interval + Math.random() * 1500); // random delay biar natural
+    // 3️⃣ Delay random biar natural
+    await delay(interval + Math.random() * 1500);
 
+    // 4️⃣ Scroll sedikit untuk postingan berikutnya
     await page.evaluate(() => window.scrollBy(0, 700));
     await delay(2000);
   }
 
   console.log("✅ AutoLike selesai");
 }
+
 
 (async () => {
   const browser = await puppeteer.launch({
