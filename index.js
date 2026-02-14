@@ -1,7 +1,5 @@
 "use strict";
 
-"use strict";
-
 const fs = require("fs");
 const path = require("path");
 const https = require("https");
@@ -63,21 +61,31 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
   throw new Error("❌ template_ig.xlsx tidak ditemukan");
 }
 
-const templates = readTemplate(TEMPLATE_PATH);
-console.log("📑 Sheet terbaca:", Object.keys(templates));
-
-const igUnfollowRows = templates.igUnfollow || [];
+    const templates = readTemplate(TEMPLATE_PATH);
+    console.log("📑 Sheet terbaca:", Object.keys(templates));
+    const likeRows = templates.LIKE || [];
+    const followFollowersRows = templates.FOLLOWFOLLOWER || [];
+    const followFollowingsRows = templates.FOLLOWFOLLOWING || [];
+    const addFriendFollowingRows = templates.UNFOLLOW || [];
 
     
 
     const browser = await puppeteer.launch({
-      headless: "new", // IG lebih aman non-headless
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      headless: "new",
+      defaultViewport: { width: 390, height: 844, isMobile: true, hasTouch: true },
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-blink-features=AutomationControlled",
+        "--disable-dev-shm-usage",
+        "--disable-gpu"
+      ],
     });
 
     for (const acc of accounts) {
 
       console.log(`\n🚀 Start akun: ${acc.account}`);
+      
       const today = new Date().toISOString().slice(0, 10);
 
 const rowsIGForAccount = igUnfollowRows.filter(row => {
