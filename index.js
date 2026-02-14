@@ -9,8 +9,6 @@ const cookies = JSON.parse(raw);
 // =====================
 // AutoLike Function
 // =====================
-
-      return true;
 async function autoLike(page, maxLikes = 10, interval = 3000) {
   console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
