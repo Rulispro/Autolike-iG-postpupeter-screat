@@ -43,7 +43,7 @@ async function autoLike(page, maxLikes = 10, interval = 3000) {
 
 
     // === Kalau gagal total → scroll cari postingan baru ===
-    if (!success) {
+    if (!result.status) {
       console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
       await page.evaluate(() => window.scrollBy(0, 600));
       await delay(2000);
