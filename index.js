@@ -1,135 +1,76 @@
-const puppeteer = require("puppeteer");
-const fs = require("fs");
+// =====================
+// AutoLike Function
+// =====================
+async function autoLike(page, maxLikes = 10, interval = 3000) {
+  console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
-// ======================
-// Helper Delay
-// ======================
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const delay = ms => new Promise(r => setTimeout(r, ms));
 
-// ======================
-// Load Cookies
-// ======================
-let cookies = [];
-try {
-  const raw = fs.readFileSync("./cookies.json", "utf8");
-  cookies = JSON.parse(raw);
-  console.log("✅ Cookies berhasil dimuat");
-} catch (e) {
-  console.error("❌ Gagal membaca cookies.json:", e.message);
-  process.exit(1);
-}
+  for (let i = 0; i < maxLikes; i++) {
+    let success = false;
 
-// ======================
-// Open Following
-// ======================
-async function openFollowing(page, username) {
-  console.log(`🚀 Buka profil @${username}`);
-  await page.goto(`https://www.instagram.com/${username}/`, {
-    waitUntil: "networkidle2",
-  });
+    // === Cara 1: evaluate click ===
+    try {
+      success = await page.evaluate(() => {
+        const btn = [...document.querySelectorAll("svg")]
+          .find(el =>
+            el.getAttribute("aria-label") === "Like" ||
+            el.getAttribute("aria-label") === "Suka"
+          );
 
-  try {
-    await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
-    await page.click(`a[href="/${username}/following/"]`);
-    console.log("✅ Link following diklik");
-    await delay(3000); // jeda 3 detik biar daftar kebuka
-  } catch (e) {
-    console.log("❌ Link following tidak ditemukan:", e.message);
-    return false;
-  }
+        if (!btn) return false;
 
-  // Cek desktop (dialog)
-  const isDialog = await page.$('div[role="dialog"] ul, div._aano ul');
-  if (isDialog) {
-    console.log("✅ Mode Desktop: dialog following muncul");
-    return "dialog";
-  }
+        const button = btn.closest("button");
+        if (!button) return false;
 
-  // Cek mobile (halaman /following)
-  if (page.url().includes("/following")) {
-    console.log("✅ Mode Mobile: halaman following terbuka");
-    return "page";
-  }
+        button.scrollIntoView({ behavior: "smooth", block: "center" });
+        button.click();
+        return true;
+      });
 
-  console.log("❌ Gagal buka daftar following");
-  return false;
-}
+      if (success) {
+        console.log(`❤️ (evaluate) Like ke-${i + 1}`);
+      }
+    } catch (e) {
+      console.log("⚠️ Evaluate error:", e.message);
+    }
 
-// ======================
-// AutoFollow
-// ======================
-async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
-  const mode = await openFollowing(page, username);
-  if (!mode) return;
-
-  let count = 0;
-
-  while (count < maxFollow) {
-    let clicked = false;
-
-    // cari tombol pertama di viewport
-    const btnHandle = await page.evaluateHandle(() => {
-      const buttons = Array.from(document.querySelectorAll("button"))
-        .filter(b => ["Ikuti", "Follow"].includes(b.innerText.trim()) && b.offsetParent !== null);
-      return buttons.length > 0 ? buttons[0] : null;
-    });
-
-    if (btnHandle) {
+    // === Cara 2: fallback pakai puppeteer click ===
+    if (!success) {
       try {
-        await btnHandle.click();
-        clicked = true;
-        console.log(`➕ Follow ke-${count + 1} (click)`);
-      } catch {
-        // fallback tap
-        try {
-          const box = await btnHandle.boundingBox();
-          if (box) {
-            await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-            clicked = true;
-            console.log(`➕ Follow ke-${count + 1} (tap)`);
+        const btnHandle = await page.$("svg[aria-label='Like'], svg[aria-label='Suka']");
+        if (btnHandle) {
+          const button = await btnHandle.evaluateHandle(el => el.closest("button"));
+          if (button) {
+            await button.click();
+            success = true;
+            console.log(`❤️ (puppeteer.click) Like ke-${i + 1}`);
           }
-        } catch {}
+        }
+      } catch (e) {
+        console.log("⚠️ Puppeteer click error:", e.message);
       }
     }
 
-    if (clicked) {
-      count++;
-      await delay(interval);
-
-      // scroll sedikit supaya akun berikutnya naik
-      if (mode === "dialog") {
-        await page.evaluate(() => {
-          const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-          if (dialog) dialog.scrollBy(0, 120);
-        });
-      } else {
-        await page.evaluate(() => window.scrollBy(0, 120));
-      }
-
-      await delay(1000);
+    // === Kalau gagal total → scroll cari postingan baru ===
+    if (!success) {
+      console.log(`❌ Like ke-${i + 1} gagal, scroll cari postingan baru...`);
+      await page.evaluate(() => window.scrollBy(0, 600));
+      await delay(2000);
       continue;
     }
 
-    // kalau tidak ada tombol → scroll agak jauh
-    if (mode === "dialog") {
-      console.log("🔄 Scroll dialog cari tombol...");
-      await page.evaluate(() => {
-        const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-        if (dialog) dialog.scrollBy(0, 400);
-      });
-    } else {
-      console.log("🔄 Scroll halaman cari tombol...");
-      await page.evaluate(() => window.scrollBy(0, 400));
-    }
+    // Delay antar klik
+    await delay(interval);
+
+    // Scroll supaya muncul postingan berikutnya
+    await page.evaluate(() => window.scrollBy(0, 500));
     await delay(1500);
   }
 
-  console.log(`🎉 AutoFollow selesai, total follow: ${count}`);
+  console.log("✅ AutoLike selesai");
 }
 
-// ======================
-// Main
-// ======================
 (async () => {
   const browser = await puppeteer.launch({
     headless: true,
@@ -138,15 +79,10 @@ async function autoFollow(page, username, maxFollow = 10, interval = 3000) {
 
   const page = await browser.newPage();
 
-  // Set cookies
   await page.setCookie(...cookies);
-
-  // Buka Instagram
   await page.goto("https://www.instagram.com/", { waitUntil: "networkidle2" });
-  console.log("✅ Login berhasil dengan cookies");
 
-  // Jalankan auto follow target dari daftar following
-  await autoFollow(page, "zayrahijab", 5, 3000); // follow 5 orang, jeda 3 detik
+  await autoLike(page, 10, 3000);
 
   await browser.close();
 })();
