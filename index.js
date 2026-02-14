@@ -1,5 +1,6 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
+const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
