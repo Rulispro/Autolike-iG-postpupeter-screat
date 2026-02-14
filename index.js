@@ -86,23 +86,6 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
 
       console.log(`\n🚀 Start akun: ${acc.account}`);
       
-      const today = new Date().toISOString().slice(0, 10);
-
-const rowsIGForAccount = igUnfollowRows.filter(row => {
-  if (row.account !== acc.account) return false;
-
-  const rowDate = parseTanggalXLSX(row.tanggal);
-  return rowDate === today;
-});
-
-console.log(`📋 igUnfollow row ${acc.account}:`, rowsIGForAccount.length);
-
-if (rowsIGForAccount.length === 0) {
-  console.log("⏭️ Tidak ada jadwal IG hari ini");
-  continue;
-}
-
-
       const context = await browser.createIncognitoBrowserContext();
       const page = await context.newPage();
 
@@ -120,6 +103,39 @@ if (rowsIGForAccount.length === 0) {
         hasTouch: true
       });
 
+     
+      const today = new Date().toISOString().slice(0, 10);
+      //FILTER IG UNFOLLOW 
+ const rowsIGForAccount = igUnfollowRows.filter(row => {
+  if (row.account !== acc.account) return false;
+
+  const rowDate = parseTanggalXLSX(row.tanggal);
+  return rowDate === today;
+});
+
+console.log(`📋 igUnfollow row ${acc.account}:`, rowsIGForAccount.length);
+
+
+       
+console.log(`📋 Igunfollow row ${acc.account}:`, rowsIGForAccount.length);
+//console.log(`📋 Status row ${acc.account}:`, rowsStatusForAccount.length);
+//console.log(`📋 addFriendFollowers row ${acc.account}:`, rowsAddFriendFollowersForAccount.length);
+//console.log(`📋 addFriendFollowings row ${acc.account}:`, rowsAddFriendFollowingForAccount.length); 
+//console.log(`📋 addFriendListRows row ${acc.account}:`, rowsAddFriendFriendsForAccount.length);
+//console.log(`📋 undfriend row ${acc.account}:`, rowsUndfriendForAccount.length);
+    if (rowsIGForAccount.length === 0) {
+  console.log("⏭️ Tidak ada jadwal IG hari ini");
+  continue;
+}
+
+if (mode === "igunfollow") {
+
+  for (const row of rowsIGForAccount) {
+    await runIGUnfollow(page, row.target_username);
+  }
+}
+
+      
       await page.setCookie(...acc.cookies);
 
       await page.goto("https://www.instagram.com/", {
@@ -128,9 +144,7 @@ if (rowsIGForAccount.length === 0) {
 
       await delay(4000);
 
-      if (mode === "igunfollow") {
-        await runIGUnfollow(page, acc.target_username);
-      }
+      
 
       console.log(`✅ Selesai akun ${acc.account}`);
 
