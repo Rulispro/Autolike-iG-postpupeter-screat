@@ -11,7 +11,7 @@ const cookies = JSON.parse(raw);
 // =====================
 
       return true;
-}async function autoLike(page, maxLikes = 10, interval = 3000) {
+async function autoLike(page, maxLikes = 10, interval = 3000) {
   console.log(`🚀 Mulai AutoLike, target ${maxLikes} like`);
 
   const delay = ms => new Promise(r => setTimeout(r, ms));
