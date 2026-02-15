@@ -6,6 +6,7 @@ const https = require("https");
 const XLSX = require("xlsx");   
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
 puppeteer.use(StealthPlugin())
 //log row template 
