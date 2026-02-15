@@ -510,7 +510,18 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
     const followFollowingsRows = templates.FOLLOWFOLLOWING || [];
     const igUnfollowRows = templates.UNFOLLOW || [];
 
-    
+    console.log("📌 Contoh 1 row LIKE:");
+console.log(likeRows[0]);
+
+console.log("📌 Contoh 1 row FOLLOWFOLLOWER:");
+console.log(followFollowersRows[0]);
+
+console.log("📌 Contoh 1 row FOLLOWFOLLOWING:");
+console.log(followFollowingsRows[0]);
+
+console.log("📌 Contoh 1 row UNFOLLOW:");
+console.log(igUnfollowRows[0]);
+
 
     const browser = await puppeteer.launch({
       headless: "new",
