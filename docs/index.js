@@ -26,13 +26,20 @@ function logTemplateRow(mode, row) {
 function parseTanggalXLSX(tgl) {
   if (!tgl) return null;
 
-  // format: M/D/YY atau MM/DD/YY
-  const [m, d, y] = tgl.split("/");
+  const parts = tgl.split("/");
 
-  const year = Number(y) < 100 ? 2000 + Number(y) : Number(y);
+  if (parts.length !== 3) return null;
 
-  return `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  }
+  // FORMAT INDONESIA → DD/MM/YYYY
+  const [day, month, yearRaw] = parts;
+
+  const year = Number(yearRaw) < 100
+    ? 2000 + Number(yearRaw)
+    : Number(yearRaw);
+
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 //)
 async function openFollowingSelf(page, username) {
   console.log(`🚀 Buka following @${username}`);
