@@ -566,6 +566,9 @@ console.log(igUnfollowRows[0]);
       const page = await context.newPage();
 
       await page.setBypassCSP(true); 
+      const recorder = new PuppeteerScreenRecorder(page);
+     await recorder.start(`recording_${acc.account}.mp4`);
+
       // Mobile mode
       await page.setUserAgent(
         "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 " +
@@ -684,7 +687,10 @@ if (mode === "Unfollow") {
       
 
       console.log(`✅ Selesai akun ${acc.account}`);
-
+      // ===== Stop recorder
+      await recorder.stop();
+     console.log(`🎬 Rekaman selesai: recording_${acc.account}.mp4`);
+    
       await page.close();
       let activeRows = [];
 
