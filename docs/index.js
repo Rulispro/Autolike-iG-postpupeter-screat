@@ -38,6 +38,85 @@ function readTemplate(filePath) {
 
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
+///===FUNGSI LIKE===///
+async function runLike(page, row) {
+  console.log(`\n📝 Mulai Like → ${row.account}`);
+
+  // Ambil langsung dari template
+  const total = Number(row.total) || 0;
+  const delayMin = Number(row.delay_min) || 2000;
+  const delayMax = Number(row.delay_max) || 4000;
+
+  if (total <= 0) {
+    console.log("⚠️ Total kosong, skip");
+    return;
+  }
+
+  await page.goto("https://www.instagram.com/", {
+    waitUntil: "networkidle2"
+  });
+
+  await delay(4000);
+
+  const isLogin = await page.evaluate(() => {
+    return document.body.innerText.includes("Log in") === false;
+  });
+
+  if (!isLogin) {
+    console.log("❌ Belum login, skip akun");
+    return;
+  }
+
+  // 👇 AUTO NGIKUT TEMPLATE
+  await autoLike(page, total, delayMin, delayMax);
+
+  console.log(`✅ Like selesai untuk ${row.account}`);
+}
+
+  // 👇 AUTO NGIKUT TEMPLATE
+async function autoLike(page, total, delayMin, delayMax) {
+  console.log(`🚀 Mulai AutoLike`);
+  console.log(`🎯 Target: ${total}`);
+  console.log(`⏳ Delay: ${delayMin} - ${delayMax}`);
+
+  const randomDelay = () =>
+    Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+  for (let i = 0; i < total; i++) {
+
+    const result = await page.evaluate(() => {
+      const likes = Array.from(
+        document.querySelectorAll('svg[aria-label="Like"], svg[aria-label="Suka"]')
+      );
+
+      if (likes.length === 0) return false;
+
+      const btn = likes[0];
+      btn.scrollIntoView({ block: "center" });
+
+      btn.closest("button")?.click();
+
+      return true;
+    });
+
+    if (!result) {
+      console.log(`❌ Like ke-${i + 1} gagal, scroll...`);
+      await page.evaluate(() => window.scrollBy(0, 900));
+      await delay(2500);
+      i--;
+      continue;
+    }
+
+    console.log(`❤️ Like ke-${i + 1} berhasil`);
+
+    await delay(randomDelay());
+    await page.evaluate(() => window.scrollBy(0, 700));
+    await delay(2000);
+  }
+
+  console.log("✅ AutoLike selesai");
+}
+
 
 (async () => {
   try {
