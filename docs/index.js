@@ -551,11 +551,9 @@ console.log(igUnfollowRows[0]);
       executablePath: "/usr/bin/google-chrome",
       defaultViewport: { width: 390, height: 844, isMobile: true, hasTouch: true },
       args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-blink-features=AutomationControlled",
-        "--disable-dev-shm-usage",
-        "--disable-gpu"
+           "--no-sandbox",
+           "--disable-setuid-sandbox",
+           "--disable-dev-shm-usage"
       ],
     });
 
@@ -675,18 +673,6 @@ if (mode === "Unfollow") {
     await runIGUnfollow(page, row);
   }
 }
-
-      
- //     await page.setCookie(...acc.cookies);
-
-     // await page.goto("https://www.instagram.com/", {
-     ///   waitUntil: "networkidle2"
-    ///  });
-
-     // await delay(4000);
-
-      
-
       console.log(`✅ Selesai akun ${acc.account}`);
       // ===== Stop recorder
       await recorder.stop();
