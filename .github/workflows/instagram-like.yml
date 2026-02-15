@@ -26,3 +26,9 @@ jobs:
 
       - name: Run Like
         run: node docs/index.js Like
+
+      - name: Upload recordings
+        uses: actions/upload-artifact@v4
+        with:
+          name: recordings-Like
+          path: recording_*.mp4
