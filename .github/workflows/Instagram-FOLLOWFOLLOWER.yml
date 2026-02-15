@@ -2,8 +2,8 @@ name: Instagram Follow Follower
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * *'   # 10:00 WIB
+ # schedule:
+   # - cron: '0 3 * * *'   # 10:00 WIB
 
 concurrency:
   group: instagram-follow-follower
