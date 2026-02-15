@@ -1,0 +1,23 @@
+name: Instagram Like Bot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-like:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+
+      - name: Run Like Bot
+        run: node docs/index.js Like
