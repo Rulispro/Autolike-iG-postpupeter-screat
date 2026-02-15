@@ -71,15 +71,37 @@ function readTemplate(filePath) {
   const sheets = {};
 
   workbook.SheetNames.forEach(name => {
-    const cleanName = name.trim();   // 🔥 TRIM DI SINI
-    sheets[cleanName] = XLSX.utils.sheet_to_json(
+    const cleanName = name.trim();
+
+    const rawRows = XLSX.utils.sheet_to_json(
       workbook.Sheets[name],
       { defval: "" }
     );
+
+    // 🔥 BERSIHKAN KEY & VALUE
+    const cleanRows = rawRows.map(row => {
+      const newRow = {};
+
+      Object.keys(row).forEach(key => {
+        const cleanKey = key.trim(); // hapus spasi header
+        let value = row[key];
+
+        if (typeof value === "string") {
+          value = value.trim(); // hapus spasi isi cell
+        }
+
+        newRow[cleanKey] = value;
+      });
+
+      return newRow;
+    });
+
+    sheets[cleanName] = cleanRows;
   });
 
   return sheets;
 }
+
 
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
