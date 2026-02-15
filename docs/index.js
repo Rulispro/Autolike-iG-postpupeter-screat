@@ -631,7 +631,15 @@ console.log(`📋 igUnfollowRows row ${acc.account}:`, rowsIGUnfollowForAccount.
   console.log("⏭️ Tidak ada jadwal IG hari ini");
   continue;
 }
-     //LAKUKAN LIKE
+   await page.setCookie(...acc.cookies);
+
+      await page.goto("https://www.instagram.com/", {
+        waitUntil: "networkidle2"
+      });
+
+      await delay(4000);
+      
+      //LAKUKAN LIKE
       if (mode === "Like") {
 
   for (const row of rowsIGLikeForAccount) {
@@ -665,13 +673,13 @@ if (mode === "Unfollow") {
 }
 
       
-      await page.setCookie(...acc.cookies);
+ //     await page.setCookie(...acc.cookies);
 
-      await page.goto("https://www.instagram.com/", {
-        waitUntil: "networkidle2"
-      });
+     // await page.goto("https://www.instagram.com/", {
+     ///   waitUntil: "networkidle2"
+    ///  });
 
-      await delay(4000);
+     // await delay(4000);
 
       
 
