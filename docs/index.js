@@ -26,19 +26,26 @@ function logTemplateRow(mode, row) {
 function parseTanggalXLSX(tgl) {
   if (!tgl) return null;
 
-  const parts = tgl.split("/");
+  // Kalau Excel serial number
+  if (typeof tgl === "number") {
+    const excelDate = XLSX.SSF.parse_date_code(tgl);
+    if (!excelDate) return null;
 
-  if (parts.length !== 3) return null;
+    return `${excelDate.y}-${String(excelDate.m).padStart(2, "0")}-${String(excelDate.d).padStart(2, "0")}`;
+  }
 
-  // FORMAT INDONESIA → DD/MM/YYYY
-  const [day, month, yearRaw] = parts;
+  // Kalau string format DD/MM/YYYY
+  if (typeof tgl === "string") {
+    const parts = tgl.split("/");
+    if (parts.length !== 3) return null;
 
-  const year = Number(yearRaw) < 100
-    ? 2000 + Number(yearRaw)
-    : Number(yearRaw);
+    const [day, month, year] = parts;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
 
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  return null;
 }
+
 
 //)
 async function openFollowingSelf(page, username) {
@@ -547,6 +554,10 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
   .slice(0, 10);
 
 console.log("🗓 TODAY WIB:", today);
+      ////coba cek
+      console.log("RAW tanggal dari Excel:", likeRows[0]?.tanggal);
+console.log("TYPE tanggal:", typeof likeRows[0]?.tanggal);
+
 
       //FILTER LIKE
       const rowsIGLikeForAccount = likeRows.filter(row => {
