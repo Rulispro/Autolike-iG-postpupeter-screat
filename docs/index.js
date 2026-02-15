@@ -8,6 +8,19 @@ const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 
 puppeteer.use(StealthPlugin())
+//log row template 
+function logTemplateRow(mode, row) {
+  console.log("📄 ================================");
+  console.log(`📄 MODE        : ${mode}`);
+  console.log(`👤 ACCOUNT     : ${row.account}`);
+  console.log(`📅 TANGGAL     : ${row.tanggal}`);
+  console.log(`🎯 TOTAL       : ${row.total}`);
+  console.log(`⏳ DELAY MIN   : ${row.delay_min}`);
+  console.log(`⏳ DELAY MAX   : ${row.delay_max}`);
+  console.log(`🕒 DELAY AKUN  : ${row.delay_akun || "-"}`);
+  console.log(`🎯 TARGET USER : ${row.link_targetUsername || row.target_Username || "-"}`);
+  console.log("📄 ================================");
+}
 
 //PARSE TANGGAL///
 function parseTanggalXLSX(tgl) {
@@ -571,6 +584,7 @@ console.log(`📋 igUnfollowRows row ${acc.account}:`, rowsIGUnfollowForAccount.
       if (mode === "Like") {
 
   for (const row of rowsIGLikeForAccount) {
+   logTemplateRow("LIKE", row);
     await runLike(page, row);
   }
 }
@@ -578,6 +592,7 @@ console.log(`📋 igUnfollowRows row ${acc.account}:`, rowsIGUnfollowForAccount.
       if (mode === "FollowFollower") {
 
   for (const row of rowsIGFollowFollowerForAccount) {
+     logTemplateRow("LIKE", row);
     await runFollowFollower(page, row);
   }
 }
@@ -585,14 +600,16 @@ console.log(`📋 igUnfollowRows row ${acc.account}:`, rowsIGUnfollowForAccount.
       if (mode === "FollowFollowing") {
 
   for (const row of rowsIGFollowFollowingForAccount) {
-    await runFollowaFollowing(page, row);
+    logTemplateRow("LIKE", row);
+    await runFollowFollowing(page, row);
   }
 }
    //, LAKUKAN UNFOLLOW  
 if (mode === "Unfollow") {
 
   for (const row of rowsIGUnfollowForAccount) {
-    await runIGUnfollow(page, row.target_username);
+    logTemplateRow("LIKE", row);
+    await runIGUnfollow(page, row);
   }
 }
 
