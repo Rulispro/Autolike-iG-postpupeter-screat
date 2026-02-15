@@ -106,7 +106,13 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
       });
 
      
-      const today = new Date().toISOString().slice(0, 10);
+      const today = new Date(
+  new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+)
+  .toISOString()
+  .slice(0, 10);
+
+console.log("🗓 TODAY WIB:", today);
 
       //FILTER LIKE
       const rowsIGLikeForAccount = likeRows.filter(row => {
