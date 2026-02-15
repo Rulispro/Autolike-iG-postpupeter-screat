@@ -73,6 +73,7 @@ if (!fs.existsSync(TEMPLATE_PATH)) {
 
     const browser = await puppeteer.launch({
       headless: "new",
+      executablePath: "/usr/bin/google-chrome",
       defaultViewport: { width: 390, height: 844, isMobile: true, hasTouch: true },
       args: [
         "--no-sandbox",
