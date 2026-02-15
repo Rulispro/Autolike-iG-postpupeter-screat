@@ -20,6 +20,24 @@ function parseTanggalXLSX(tgl) {
 
   return `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
+//)
+async function openFollowingSelf(page, username) {
+  console.log(`🚀 Buka following @${username}`);
+
+  await page.goto(`https://www.instagram.com/${username}/following/`, {
+    waitUntil: "networkidle2",
+  });
+
+  await delay(4000);
+
+  const isDialog = await page.$('div[role="dialog"] ul, div._aano ul');
+
+  if (isDialog) return "dialog";
+  if (page.url().includes("/following")) return "page";
+
+  return false;
+}
+
  // TEMPLATE XLSX 
 function readTemplate(filePath) {
   const workbook = XLSX.readFile(filePath);
@@ -115,6 +133,323 @@ async function autoLike(page, total, delayMin, delayMax) {
   }
 
   console.log("✅ AutoLike selesai");
+}
+// =====================
+// AUTO FOLLOW FOLLOWERS
+// =====================
+async function autoFollow(page, username, total, delayMin, delayMax) {
+
+  console.log(`🚀 Mulai AutoFollow Followers`);
+  console.log(`🎯 Target: ${total}`);
+  console.log(`👤 Username: ${username}`);
+  console.log(`⏳ Delay: ${delayMin} - ${delayMax}`);
+
+  const randomDelay = () =>
+    Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+  // buka followers target
+  await page.goto(`https://www.instagram.com/${username}/followers/`, {
+    waitUntil: "networkidle2"
+  });
+
+  await delay(4000);
+
+  let count = 0;
+
+  while (count < total) {
+
+    const btnHandle = await page.evaluateHandle(() => {
+      const buttons = Array.from(document.querySelectorAll("button"))
+        .filter(b =>
+          ["Ikuti", "Follow"].includes(b.innerText.trim()) &&
+          b.offsetParent !== null
+        );
+
+      return buttons.length > 0 ? buttons[0] : null;
+    });
+
+    if (btnHandle) {
+      try {
+        await btnHandle.click();
+        count++;
+        console.log(`➕ Follow ke-${count}`);
+        await delay(randomDelay());
+      } catch {
+        console.log("⚠️ Gagal klik, lanjut scroll");
+      }
+    }
+
+    // scroll list followers
+    await page.evaluate(() => {
+      const dialog = document.querySelector('div[role="dialog"] ul');
+      if (dialog) {
+        dialog.scrollBy(0, 400);
+      } else {
+        window.scrollBy(0, 400);
+      }
+    });
+
+    await delay(2000);
+  }
+
+  console.log(`🎉 AutoFollow selesai, total follow: ${count}`);
+}
+
+//==fungsi auto follow followers 
+async function runFollowFollower(page, row) {
+  console.log(`\n📝 Mulai FollowFollower → ${row.account}`);
+
+  const total = Number(row.total) || 0;
+  const username = row.link_targetUsername;
+  const delayMin = Number(row.delay_min) || 3000;
+  const delayMax = Number(row.delay_max) || 6000;
+
+  if (!total || !username) {
+    console.log("⚠️ Data tidak lengkap, skip");
+    return;
+  }
+
+  // buka home dulu
+  await page.goto("https://www.instagram.com/", {
+    waitUntil: "networkidle2"
+  });
+
+  await delay(4000);
+
+  // cek login
+  const isLogin = await page.evaluate(() => {
+    return document.body.innerText.includes("Log in") === false;
+  });
+
+  if (!isLogin) {
+    console.log("❌ Belum login, skip akun");
+    return;
+  }
+
+  // 🔥 AUTO NGIKUT TEMPLATE XLSX
+  await autoFollow(page, username, total, delayMin, delayMax);
+
+  console.log(`✅ FollowFollower selesai untuk ${row.account}`);
+}
+
+//Helper 
+async function openFollowing(page, username) {
+  console.log(`🚀 Buka profil @${username}`);
+
+  await page.goto(`https://www.instagram.com/${username}/`, {
+    waitUntil: "networkidle2",
+  });
+
+  await delay(4000);
+
+  try {
+    await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
+    await page.click(`a[href="/${username}/following/"]`);
+    console.log("✅ Link following diklik");
+    await delay(4000);
+  } catch (e) {
+    console.log("❌ Link following tidak ditemukan");
+    return false;
+  }
+
+  const isDialog = await page.$('div[role="dialog"] ul, div._aano ul');
+
+  if (isDialog) return "dialog";
+  if (page.url().includes("/following")) return "page";
+
+  return false;
+}
+/////////
+async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
+
+  console.log(`🚀 Mulai Follow Following`);
+  console.log(`🎯 Target: ${total}`);
+  console.log(`⏳ Delay: ${delayMin}-${delayMax}`);
+
+  const mode = await openFollowing(page, username);
+  if (!mode) return;
+
+  const randomDelay = () =>
+    Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+  let count = 0;
+
+  while (count < total) {
+
+    const btnHandle = await page.evaluateHandle(() => {
+      const buttons = Array.from(document.querySelectorAll("button"))
+        .filter(b =>
+          ["Ikuti", "Follow"].includes(b.innerText.trim()) &&
+          b.offsetParent !== null
+        );
+
+      return buttons.length > 0 ? buttons[0] : null;
+    });
+
+    if (btnHandle) {
+      try {
+        await btnHandle.click();
+        count++;
+        console.log(`➕ Follow ke-${count}`);
+        await delay(randomDelay());
+      } catch {
+        console.log("⚠️ Gagal klik");
+      }
+    }
+
+    // scroll
+    if (mode === "dialog") {
+      await page.evaluate(() => {
+        const dialog = document.querySelector('div[role="dialog"] ul') ||
+                       document.querySelector('div._aano ul');
+        if (dialog) dialog.scrollBy(0, 400);
+      });
+    } else {
+      await page.evaluate(() => window.scrollBy(0, 400));
+    }
+
+    await delay(1500);
+  }
+
+  console.log(`🎉 FollowFollowing selesai, total: ${count}`);
+}
+////////
+async function runFollowFollowing(page, row) {
+  console.log(`\n📝 Mulai FollowFollowing → ${row.account}`);
+
+  const total = Number(row.total) || 0;
+  const targetUsername = row.target_Username;
+  const delayMin = Number(row.delay_min) || 3000;
+  const delayMax = Number(row.delay_max) || 6000;
+
+  if (!total || !targetUsername) {
+    console.log("⚠️ Data tidak lengkap, skip");
+    return;
+  }
+
+  await page.goto("https://www.instagram.com/", {
+    waitUntil: "networkidle2"
+  });
+
+  await delay(4000);
+
+  const isLogin = await page.evaluate(() => {
+    return document.body.innerText.includes("Log in") === false;
+  });
+
+  if (!isLogin) {
+    console.log("❌ Belum login, skip akun");
+    return;
+  }
+
+  // 🔥 AUTO NGIKUT ROW XLSX
+  await autoFollowFollowing(page, targetUsername, total, delayMin, delayMax);
+
+  console.log(`✅ FollowFollowing selesai untuk ${row.account}`);
+}
+
+
+////unfollow 
+async function runIGUnfollow(page, row) {
+  console.log(`\n📝 Mulai Unfollow → ${row.account}`);
+
+  const username = row.account; // unfollow dari akun sendiri
+  const total = Number(row.total) || 0;
+  const delayMin = Number(row.delay_min) || 4000;
+  const delayMax = Number(row.delay_max) || 7000;
+
+  if (!total) {
+    console.log("⚠️ Total kosong, skip");
+    return;
+  }
+
+  await page.goto("https://www.instagram.com/", {
+    waitUntil: "networkidle2"
+  });
+
+  await delay(4000);
+
+  const isLogin = await page.evaluate(() => {
+    return document.body.innerText.includes("Log in") === false;
+  });
+
+  if (!isLogin) {
+    console.log("❌ Belum login, skip akun");
+    return;
+  }
+
+  // 🔥 AUTO NGIKUT XLSX
+  await autoUnfollow(page, username, total, delayMin, delayMax);
+
+  console.log(`✅ Unfollow selesai untuk ${row.account}`);
+}
+
+//////)
+async function autoUnfollow(page, username, total, delayMin, delayMax) {
+
+  console.log(`🚀 Mulai Unfollow`);
+  console.log(`🎯 Target: ${total}`);
+  console.log(`⏳ Delay: ${delayMin}-${delayMax}`);
+
+  const mode = await openFollowingSelf(page, username);
+  if (!mode) return;
+
+  const randomDelay = () =>
+    Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+  let count = 0;
+
+  while (count < total) {
+
+    const btnHandle = await page.evaluateHandle(() => {
+      const buttons = Array.from(document.querySelectorAll("button"))
+        .filter(b =>
+          /Diikuti|Following/i.test(b.innerText.trim()) &&
+          b.offsetParent !== null
+        );
+
+      return buttons.length > 0 ? buttons[0] : null;
+    });
+
+    if (!btnHandle) {
+      console.log("🔄 Scroll cari tombol...");
+      await page.evaluate(() => {
+        const dialog = document.querySelector('div[role="dialog"] ul') ||
+                       document.querySelector('div._aano ul');
+        if (dialog) dialog.scrollBy(0, 400);
+        else window.scrollBy(0, 400);
+      });
+      await delay(2000);
+      continue;
+    }
+
+    try {
+      await btnHandle.click();
+      console.log(`🔘 Klik Following ke-${count + 1}`);
+      await delay(1500);
+
+      const confirmClicked = await page.evaluate(() => {
+        const btn = Array.from(document.querySelectorAll("button"))
+          .find(b => /Batal mengikuti|Unfollow/i.test(b.innerText));
+        if (btn) {
+          btn.click();
+          return true;
+        }
+        return false;
+      });
+
+      if (confirmClicked) {
+        count++;
+        console.log(`❌ Unfollow ke-${count} berhasil`);
+        await delay(randomDelay());
+      }
+
+    } catch {
+      console.log("⚠️ Gagal klik tombol");
+    }
+  }
+
+  console.log(`🎉 Unfollow selesai, total: ${count}`);
 }
 
 
