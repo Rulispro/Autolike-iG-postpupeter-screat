@@ -572,12 +572,12 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
         
         ///
         await delay(randomDelay());
-      }
+      
 
     } catch {
       console.log("⚠️ Gagal klik tombol");
     }
-  }
+  
 
   console.log(`🎉 Unfollow selesai, total: ${count}`);
 }
