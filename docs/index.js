@@ -176,7 +176,16 @@ async function autoLike(page, total, delayMin, delayMax) {
     }
 
     console.log(`❤️ Like ke-${i + 1} berhasil`);
+  ///screenshot 
 
+    await delay(2000); // beri waktu UI berubah
+    await page.screenshot({
+      path: `after_like_${i + 1}.png`
+    });
+    console.log(`📸 Screenshot AFTER like ke-${i + 1}`);
+
+    ////
+    
     await delay(randomDelay());
     await page.evaluate(() => window.scrollBy(0, 700));
     await delay(2000);
