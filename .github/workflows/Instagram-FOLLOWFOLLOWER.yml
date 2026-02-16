@@ -2,8 +2,8 @@ name: Instagram Follow Follower
 
 on:
   workflow_dispatch:
- # schedule:
-   # - cron: '0 3 * * *'   # 10:00 WIB
+  # schedule:
+  #   - cron: '0 3 * * *'
 
 concurrency:
   group: instagram-follow-follower
@@ -15,6 +15,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -24,3 +25,11 @@ jobs:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
 
       - run: node docs/index.js FollowFollower
+
+      # ✅ Upload Screenshot
+      - name: Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: follow-follower-screenshots
+          path: after_*.png
