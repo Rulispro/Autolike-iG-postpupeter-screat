@@ -163,6 +163,9 @@ await page.evaluate(() => {
     return;
   }
 
+    //delay 2
+  await delay(3000);
+
   // 👇 AUTO NGIKUT TEMPLATE
   await autoLike(page, total, delayMin, delayMax);
 
