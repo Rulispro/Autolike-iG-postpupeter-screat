@@ -6,7 +6,6 @@ const https = require("https");
 const XLSX = require("xlsx");   
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
 puppeteer.use(StealthPlugin())
 //log row template 
@@ -595,7 +594,7 @@ console.log(igUnfollowRows[0]);
 
 
     const browser = await puppeteer.launch({
-      headless: "new",
+      headless: "true",
       executablePath: "/usr/bin/google-chrome",
       defaultViewport: { width: 390, height: 844, isMobile: true, hasTouch: true },
       args: [
@@ -613,9 +612,7 @@ console.log(igUnfollowRows[0]);
       const page = await context.newPage();
 
       await page.setBypassCSP(true); 
-      const recorder = new PuppeteerScreenRecorder(page);
-     await recorder.start(`recording_${acc.account}.mp4`);
-
+      
       // Mobile mode
       await page.setUserAgent(
         "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 " +
@@ -722,10 +719,7 @@ if (mode === "Unfollow") {
   }
 }
       console.log(`✅ Selesai akun ${acc.account}`);
-      // ===== Stop recorder
-      await recorder.stop();
-     console.log(`🎬 Rekaman selesai: recording_${acc.account}.mp4`);
-    
+      
       await page.close();
       let activeRows = [];
 
