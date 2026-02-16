@@ -600,9 +600,7 @@ console.log(igUnfollowRows[0]);
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-features=WebContentsForceDark",
-        "--force-color-profile=srgb"
+        "--disable-dev-shm-usage"
           ]
      });
 
@@ -612,22 +610,6 @@ console.log(igUnfollowRows[0]);
       
       const context = await browser.createIncognitoBrowserContext();
       const page = await context.newPage();
-      await page.evaluateOnNewDocument(() => {
-    Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: query => ({
-      matches: query.includes('light'),
-      media: query,
-      onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }),
-  });
-});
-
       await page.setBypassCSP(true); 
       
       // Mobile mode
@@ -642,20 +624,7 @@ console.log(igUnfollowRows[0]);
         isMobile: true,
         hasTouch: true
       });
-
-     //paksa putih layarnya 
-      await page.emulateMediaFeatures([
-  { name: 'prefers-color-scheme', value: 'light' }
-]);
-
-await page.addStyleTag({
-  content: `
-    :root {
-      color-scheme: light !important;
-    }
-  `
-});
-
+      
       const today = new Date(
   new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
 )
