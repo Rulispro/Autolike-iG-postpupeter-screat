@@ -270,6 +270,16 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
         await btnHandle.click();
         count++;
         console.log(`➕ Follow ke-${count}`);
+       // screenshot 
+        
+        // tunggu UI berubah
+      await delay(2000);
+
+        await page.screenshot({
+         path: `after_follow_follower_${count}.png`
+       });
+        console.log(`📸 Screenshot AFTER follow follower ke-${count}`);
+       ////
         await delay(randomDelay());
       } catch {
         console.log("⚠️ Gagal klik, lanjut scroll");
@@ -388,6 +398,16 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
         await btnHandle.click();
         count++;
         console.log(`➕ Follow ke-${count}`);
+        ///screenshot 
+         // tunggu UI update
+        await delay(2000);
+
+        await page.screenshot({
+        path: `after_follow_following_${count}.png`
+        });
+         console.log(`📸 Screenshot AFTER follow following ke-${count}`);
+
+        /////
         await delay(randomDelay());
       } catch {
         console.log("⚠️ Gagal klik");
@@ -538,6 +558,19 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
       if (confirmClicked) {
         count++;
         console.log(`❌ Unfollow ke-${count} berhasil`);
+        //screenshot 
+        
+        await delay(2000);
+
+        await page.screenshot({
+         path: `after_unfollow_${count}.png`
+         });
+        console.log(`📸 Screenshot AFTER unfollow ke-${count}`);
+
+  
+        }
+        
+        ///
         await delay(randomDelay());
       }
 
