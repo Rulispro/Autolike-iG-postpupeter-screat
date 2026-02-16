@@ -120,9 +120,9 @@ async function runLike(page, row) {
     return;
   }
 
-  //await page.goto("https://www.instagram.com/", {
-   // waitUntil: "networkidle2"
- /// });
+  await page.goto("https://www.instagram.com/", {
+   waitUntil: "networkidle2"
+ });
 
   await delay(4000);
 
