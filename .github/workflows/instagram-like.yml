@@ -38,3 +38,9 @@ jobs:
         with:
           name: recordings-Like
           path: recording_*.mp4
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+        name: after-like-images
+        path: after_like_*.png
