@@ -126,6 +126,20 @@ async function runLike(page, row) {
 
   await delay(4000);
 
+  //popup terbuka klik tutup 
+  try {
+  await page.waitForSelector('div[role="dialog"] button', { timeout: 5000 });
+  await page.evaluate(() => {
+    const btn = Array.from(document.querySelectorAll("button"))
+      .find(b => b.innerText.includes("OK"));
+    if (btn) btn.click();
+  });
+  console.log("✅ Popup ditutup");
+} catch {
+  console.log("ℹ️ Tidak ada popup");
+}
+
+
   const isLogin = await page.evaluate(() => {
     return document.body.innerText.includes("Log in") === false;
   });
