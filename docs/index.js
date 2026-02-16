@@ -184,19 +184,22 @@ async function autoLike(page, total, delayMin, delayMax) {
   for (let i = 0; i < total; i++) {
 
     const result = await page.evaluate(() => {
-      const likes = Array.from(
-        document.querySelectorAll('svg[aria-label="Like"], svg[aria-label="Suka"]')
-      );
+  const likes = Array.from(
+    document.querySelectorAll('svg[aria-label="Like"], svg[aria-label="Suka"]')
+  );
 
-      if (likes.length === 0) return false;
+  if (likes.length === 0) return false;
 
-      const btn = likes[0];
-      btn.scrollIntoView({ block: "center" });
+  const btn = likes[0].closest("button");
+  if (!btn) return false;
 
-      btn.closest("button")?.tap();
+  btn.scrollIntoView({ block: "center" });
 
-      return true;
-    });
+  btn.click(); // 🔥 INI YANG BENAR
+
+  return true;
+});
+
 
     if (!result) {
       console.log(`❌ Like ke-${i + 1} gagal, scroll...`);
@@ -208,7 +211,11 @@ async function autoLike(page, total, delayMin, delayMax) {
 
     console.log(`❤️ Like ke-${i + 1} berhasil`);
   ///screenshot 
+await page.evaluate(() => window.focus());
+await delay(1000);
 
+
+    //
     await delay(2000); // beri waktu UI berubah
     await page.screenshot({
       path: `after_like_${i + 1}.png`
