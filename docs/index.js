@@ -600,8 +600,9 @@ console.log(igUnfollowRows[0]);
       args: [
            "--no-sandbox",
            "--disable-setuid-sandbox",
-           "--disable-dev-shm-usage"
-      ],
+           "--disable-dev-shm-usage",
+           "--force-dark-mode=0"
+          ]
     });
 
     for (const acc of accounts) {
@@ -626,7 +627,19 @@ console.log(igUnfollowRows[0]);
         hasTouch: true
       });
 
-     
+     //paksa putih layarnya 
+      await page.emulateMediaFeatures([
+  { name: 'prefers-color-scheme', value: 'light' }
+]);
+
+await page.addStyleTag({
+  content: `
+    :root {
+      color-scheme: light !important;
+    }
+  `
+});
+
       const today = new Date(
   new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
 )
