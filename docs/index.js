@@ -649,7 +649,7 @@ console.log(igUnfollowRows[0]);
 
 
     const browser = await puppeteer.launch({
-      headless: "true",
+      headless: "new",
       executablePath: "/usr/bin/google-chrome",
       defaultViewport: { width: 390, height: 844, isMobile: true, hasTouch: true },
       args: [
