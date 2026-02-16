@@ -236,71 +236,93 @@ await delay(1000);
 // =====================
 async function autoFollow(page, username, total, delayMin, delayMax) {
 
-  console.log(`🚀 Mulai AutoFollow Followers`);
-  console.log(`🎯 Target: ${total}`);
-  console.log(`👤 Username: ${username}`);
-  console.log(`⏳ Delay: ${delayMin} - ${delayMax}`);
+  console.log("🚀 Mulai AutoFollow Followers");
+  console.log("🎯 Target:", total);
+  console.log("👤 Raw Username:", username);
+
+  // 🔥 Bersihkan username
+  if (username.includes("instagram.com")) {
+    username = username
+      .replace("https://www.instagram.com/", "")
+      .split("?")[0]
+      .replace("/", "");
+  }
+
+  console.log("👤 Username bersih:", username);
 
   const randomDelay = () =>
     Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
 
-  // buka followers target
-  await page.goto(`https://www.instagram.com/${username}/followers/`, {
+  // 1️⃣ buka profil
+  await page.goto(`https://www.instagram.com/${username}/`, {
     waitUntil: "networkidle2"
   });
 
   await delay(4000);
 
+  console.log("📄 URL sekarang:", page.url());
+
+  // 2️⃣ klik followers
+  const opened = await page.evaluate(() => {
+    const links = Array.from(document.querySelectorAll("a"));
+    const followerLink = links.find(a =>
+      a.href.includes("/followers")
+    );
+    if (!followerLink) return false;
+    followerLink.click();
+    return true;
+  });
+
+  if (!opened) {
+    console.log("❌ Gagal klik followers");
+    return;
+  }
+
+  // 🔥 WAJIB tunggu dialog
+  await page.waitForSelector('div[role="dialog"]', { timeout: 10000 });
+  console.log("✅ Popup followers terbuka");
+
   let count = 0;
 
   while (count < total) {
 
-    const btnHandle = await page.evaluateHandle(() => {
-      const buttons = Array.from(document.querySelectorAll("button"))
-        .filter(b =>
+    const clicked = await page.evaluate(() => {
+      const dialog = document.querySelector('div[role="dialog"]');
+      if (!dialog) return false;
+
+      const btn = Array.from(dialog.querySelectorAll("button"))
+        .find(b =>
           ["Ikuti", "Follow"].includes(b.innerText.trim()) &&
           b.offsetParent !== null
         );
 
-      return buttons.length > 0 ? buttons[0] : null;
+      if (!btn) return false;
+
+      btn.click();
+      return true;
     });
 
-    if (btnHandle) {
-      try {
-        await btnHandle.click();
-        count++;
-        console.log(`➕ Follow ke-${count}`);
-       // screenshot 
-        
-        // tunggu UI berubah
-      await delay(2000);
+    if (clicked) {
+      count++;
+      console.log(`➕ Follow ke-${count}`);
 
-        await page.screenshot({
-         path: `after_follow_follower_${count}.png`
-       });
-        console.log(`📸 Screenshot AFTER follow follower ke-${count}`);
-       ////
-        await delay(randomDelay());
-      } catch {
-        console.log("⚠️ Gagal klik, lanjut scroll");
-      }
+      await delay(2000);
+      await delay(randomDelay());
+    } else {
+      console.log("🔄 Tidak ada tombol, scroll...");
     }
 
-    // scroll list followers
+    // scroll dalam dialog
     await page.evaluate(() => {
-      const dialog = document.querySelector('div[role="dialog"] ul');
-      if (dialog) {
-        dialog.scrollBy(0, 400);
-      } else {
-        window.scrollBy(0, 400);
-      }
+      const dialogList = document.querySelector('div[role="dialog"] ul');
+      if (dialogList) dialogList.scrollBy(0, 400);
     });
 
     await delay(2000);
   }
 
-  console.log(`🎉 AutoFollow selesai, total follow: ${count}`);
-}
+  console.log("🎉 AutoFollow selesai:", count);
+} 
 
 //==fungsi auto follow followers 
 async function runFollowFollower(page, row) {
