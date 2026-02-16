@@ -120,25 +120,39 @@ async function runLike(page, row) {
     return;
   }
 
-  await page.goto("https://www.instagram.com/", {
-    waitUntil: "networkidle2"
-  });
+  //await page.goto("https://www.instagram.com/", {
+   // waitUntil: "networkidle2"
+ /// });
 
   await delay(4000);
 
-  //popup terbuka klik tutup 
-  try {
-  await page.waitForSelector('div[role="dialog"] button', { timeout: 5000 });
-  await page.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll("button"))
-      .find(b => b.innerText.includes("OK"));
-    if (btn) btn.click();
-  });
-  console.log("✅ Popup ditutup");
-} catch {
-  console.log("ℹ️ Tidak ada popup");
-}
+  
+// FORCE CLOSE ANY DIALOG
+await page.evaluate(() => {
+  const closeButtons = Array.from(document.querySelectorAll("button"))
+    .filter(b => b.innerText.match(/OK|Not Now|Nanti/i));
 
+  closeButtons.forEach(btn => btn.click());
+});
+
+await page.evaluate(() => {
+  document
+    .querySelectorAll('div[role="dialog"]')
+    .forEach(d => d.remove());
+});
+
+// force lain kali besar 
+  try {
+  const [btn] = await page.$x(
+    "//span[contains(text(),'Lain') or contains(text(),'Not') or contains(text(),'Nanti')]"
+  );
+
+  if (btn) {
+    await btn.click();
+    console.log("✅ Popup ditutup (Lain kali / Not Now)");
+    await page.waitForTimeout(2000);
+  }
+} catch {}
 
   const isLogin = await page.evaluate(() => {
     return document.body.innerText.includes("Log in") === false;
