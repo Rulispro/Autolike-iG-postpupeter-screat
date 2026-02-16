@@ -193,7 +193,7 @@ async function autoLike(page, total, delayMin, delayMax) {
       const btn = likes[0];
       btn.scrollIntoView({ block: "center" });
 
-      btn.closest("button")?.click();
+      btn.closest("button")?.tap();
 
       return true;
     });
