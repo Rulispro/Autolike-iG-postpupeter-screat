@@ -183,14 +183,23 @@ async function autoLike(page, total, delayMin, delayMax) {
 
   for (let i = 0; i < total; i++) {
 
-    const result = await page.evaluate(() => 
-  { const likes = Array.from( document.querySelectorAll('svg[aria-label="Like"], svg[aria-label="Suka"]') ); 
-   if (likes.length === 0) return false;
-   const btn = likes[0];
-   btn.scrollIntoView({ block: "center" }); 
-   btn.closest("button")?.click();
-   return true; 
-  });
+    const result = await page.evaluate(() => {
+      const likes = Array.from(
+        document.querySelectorAll('svg[aria-label="Like"]')
+      );
+
+      if (likes.length === 0) return false;
+
+      const btn = likes[0];
+
+      btn.scrollIntoView({ block: "center" });
+
+      btn.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      btn.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+      btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+      return true;
+    });
 
 
     if (!result) {
