@@ -598,12 +598,13 @@ console.log(igUnfollowRows[0]);
       executablePath: "/usr/bin/google-chrome",
       defaultViewport: { width: 390, height: 844, isMobile: true, hasTouch: true },
       args: [
-           "--no-sandbox",
-           "--disable-setuid-sandbox",
-           "--disable-dev-shm-usage",
-           "--force-dark-mode=0"
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-features=WebContentsForceDark",
+        "--force-color-profile=srgb"
           ]
-    });
+     });
 
     for (const acc of accounts) {
 
@@ -611,6 +612,21 @@ console.log(igUnfollowRows[0]);
       
       const context = await browser.createIncognitoBrowserContext();
       const page = await context.newPage();
+      await page.evaluateOnNewDocument(() => {
+    Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: query => ({
+      matches: query.includes('light'),
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
+});
 
       await page.setBypassCSP(true); 
       
