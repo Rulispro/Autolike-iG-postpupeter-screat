@@ -42,5 +42,5 @@ jobs:
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
-        name: after-like-images
-        path: after_like_*.png
+         name: after-like-images
+         path: after_like_*.png
