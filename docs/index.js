@@ -285,45 +285,69 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
   let count = 0;
 
   while (count < total) {
+    let clicked = false;
 
-    const clicked = await page.evaluate(() => {
-      const dialog = document.querySelector('div[role="dialog"]');
-      if (!dialog) return false;
+    // === 1. Evaluate ===
+    try {
+      clicked = await page.evaluate(() => {
+        const btn = [...document.querySelectorAll("button")]
+          .find(b => ["Ikuti", "Follow"].includes(b.innerText.trim()) && b.offsetParent !== null);
+        if (!btn) return false;
+        btn.scrollIntoView({ behavior: "smooth", block: "center" });
+        btn.click();
+        return true;
+      });
+      if (clicked) {
+        count++;
+        console.log(`➕ (evaluate) Follow ke-${count}`);
+        await delay(interval);
+        continue;
+      }
+    } catch {}
 
-      const btn = Array.from(dialog.querySelectorAll("button"))
-        .find(b =>
-          ["Ikuti", "Follow"].includes(b.innerText.trim()) &&
-          b.offsetParent !== null
-        );
+    // === 2. page.$x + click ===
+    try {
+      const btn = await page.$x("//button[text()='Follow' or text()='Ikuti']");
+      if (btn.length > 0) {
+        await btn[0].click();
+        count++;
+        console.log(`➕ (page.$) Follow ke-${count}`);
+        await delay(interval);
+        continue;
+      }
+    } catch {}
 
-      if (!btn) return false;
+    // === 3. Tap ===
+    try {
+      const btn = await page.$x("//button[text()='Follow' or text()='Ikuti']");
+      if (btn.length > 0) {
+        const box = await btn[0].boundingBox();
+        if (box) {
+          await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+          count++;
+          console.log(`➕ (tap) Follow ke-${count}`);
+          await delay(interval);
+          continue;
+        }
+      }
+    } catch {}
 
-      btn.click();
-      return true;
-    });
-
-    if (clicked) {
-      count++;
-      console.log(`➕ Follow ke-${count}`);
-
-      await delay(2000);
-      await delay(randomDelay());
+    // === Scroll jika tidak ada tombol follow ===
+    if (isDialog) {
+      console.log("❌ Tidak ada tombol follow, scroll dialog...");
+      await page.evaluate(() => {
+        const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
+        if (dialog) dialog.scrollBy(0, 200);
+      });
     } else {
-      console.log("🔄 Tidak ada tombol, scroll...");
+      console.log("❌ Tidak ada tombol follow, scroll halaman...");
+      await page.evaluate(() => window.scrollBy(0, 500));
     }
-
-    // scroll dalam dialog
-    await page.evaluate(() => {
-      const dialogList = document.querySelector('div[role="dialog"] ul');
-      if (dialogList) dialogList.scrollBy(0, 400);
-    });
-
-    await delay(2000);
+    await delay(1000);
   }
 
-  console.log("🎉 AutoFollow selesai:", count);
-} 
-
+  console.log(`✅ AutoFollow selesai, total follow: ${count}`);
+}
 //==fungsi auto follow followers 
 async function runFollowFollower(page, row) {
   console.log(`\n📝 Mulai FollowFollower → ${row.account}`);
