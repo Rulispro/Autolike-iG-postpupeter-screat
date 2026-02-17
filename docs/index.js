@@ -359,7 +359,7 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
     } catch {}
 
     // === Scroll jika tidak ada tombol follow ===
-    console.log("❌ Tidak ada tombol follow, scroll dialog...");
+    console.log("❌ Tidak ada tombol follow, scroll kebawah cari tombol follow/ikuti......");
 await page.evaluate(() => {
   const dialog = document.querySelector('div[role="dialog"] ul') 
               || document.querySelector('div._aano ul');
