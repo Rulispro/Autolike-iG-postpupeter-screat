@@ -305,6 +305,13 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
       if (clicked) {
         count++;
         console.log(`➕ (evaluate) Follow ke-${count}`);
+          // 🕒 beri waktu UI berubah ke "Following"
+  await delay(2000);
+
+  // 📸 Screenshot setelah follow
+  await page.screenshot({
+    path: `after_follow_${count}.png`
+  });
         await delay(randomDelay());
         continue;
       }
@@ -317,6 +324,13 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
         await btn[0].click();
         count++;
         console.log(`➕ (page.$) Follow ke-${count}`);
+          // 🕒 beri waktu UI berubah ke "Following"
+  await delay(2000);
+
+  // 📸 Screenshot setelah follow
+  await page.screenshot({
+    path: `after_follow_${count}.png`
+  });
         await delay(randomDelay());
         continue;
       }
@@ -331,6 +345,13 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
           await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
           count++;
           console.log(`➕ (tap) Follow ke-${count}`);
+           // 🕒 beri waktu UI berubah ke "Following"
+  await delay(2000);
+
+  // 📸 Screenshot setelah follow
+  await page.screenshot({
+    path: `after_follow_${count}.png`
+  });
           await delay(randomDelay());
           continue;
         }
