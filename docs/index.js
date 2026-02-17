@@ -438,9 +438,30 @@ async function openFollowing(page, username) {
 /////////
 async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
 
-  console.log(`🚀 Mulai Follow Following`);
-  console.log(`🎯 Target: ${total}`);
-  console.log(`⏳ Delay: ${delayMin}-${delayMax}`);
+  console.log("🎯 Target:", total);
+  console.log("👤 Raw Username:", username);
+
+  // 🔥 Bersihkan username
+  if (username.includes("instagram.com")) {
+    username = username
+      .replace("https://www.instagram.com/", "")
+      .split("?")[0]
+      .replace("/", "");
+  }
+
+  console.log("👤 Username bersih:", username);
+
+  const randomDelay = () =>
+    Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+  // 1️⃣ buka profil
+  await page.goto(`https://www.instagram.com/${username}/`, {
+    waitUntil: "networkidle2"
+  });
+
+  await delay(4000);
+
+  console.log("📄 URL sekarang:", page.url());
 
   const mode = await openFollowing(page, username);
   if (!mode) return;
@@ -504,14 +525,14 @@ async function runFollowFollowing(page, row) {
   console.log(`\n📝 Mulai FollowFollowing → ${row.account}`);
 
   const total = Number(row.total) || 0;
-  const targetUsername = row.target_Username;
+  const username = row.link_targetUsername;
   const delayMin = Number(row.delay_min) || 3000;
   const delayMax = Number(row.delay_max) || 6000;
 
-  if (!total || !targetUsername) {
+  if (!total || !username) {
     console.log("⚠️ Data tidak lengkap, skip");
     return;
-  }
+}
 
   await page.goto("https://www.instagram.com/", {
     waitUntil: "networkidle2"
