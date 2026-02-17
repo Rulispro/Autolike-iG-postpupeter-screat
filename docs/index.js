@@ -466,9 +466,7 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
   const mode = await openFollowing(page, username);
   if (!mode) return;
 
-  const randomDelay = () =>
-    Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
-
+  
   let count = 0;
 
   while (count < total) {
