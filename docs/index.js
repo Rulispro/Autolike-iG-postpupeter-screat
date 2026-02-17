@@ -436,16 +436,20 @@ async function openFollowing(page, username) {
   }
 
   // 🔥 cek dialog (desktop mode)
-  const isDialog = await page.$('div[role="dialog"] ul, div._aano ul');
-  if (isDialog) {
-    console.log("✅ Mode Desktop: dialog following muncul");
-    return "dialog";
-  }
+  try{
+    await page.waitForFunction(() => {
+    const dialog = document.querySelector('div[role="dialog"]');
+    if (!dialog) return false;
 
+    return dialog.innerText.toLowerCase().includes("following");
+  }, { timeout: 7000 });
+
+  console.log("✅ Following popup terdeteksi terbuka");
+} catch (err) {
   console.log("❌ Following tidak terdeteksi terbuka");
-  return false;
+  return;
 }
-
+}
 // ======================
 // AutoFollow
 // ==============
