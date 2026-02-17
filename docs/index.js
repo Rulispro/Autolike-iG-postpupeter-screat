@@ -411,6 +411,7 @@ async function runFollowFollower(page, row) {
 //Helper 
 async function openFollowing(page, username) {
   console.log(`🚀 Buka profil @${username}`);
+
   await page.goto(`https://www.instagram.com/${username}/`, {
     waitUntil: "networkidle2",
   });
@@ -419,26 +420,29 @@ async function openFollowing(page, username) {
     await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
     await page.click(`a[href="/${username}/following/"]`);
     console.log("✅ Link following diklik");
-    await delay(3000); // jeda 3 detik biar daftar kebuka
+
+    // 🔥 tunggu kemungkinan redirect ke halaman following
+    await page.waitForTimeout(3000);
+
   } catch (e) {
     console.log("❌ Link following tidak ditemukan:", e.message);
     return false;
   }
 
-  // Cek desktop (dialog)
+  // 🔥 cek URL dulu (mobile mode)
+  if (page.url().includes("/following")) {
+    console.log("✅ Mode Mobile: halaman following terbuka");
+    return "page";
+  }
+
+  // 🔥 cek dialog (desktop mode)
   const isDialog = await page.$('div[role="dialog"] ul, div._aano ul');
   if (isDialog) {
     console.log("✅ Mode Desktop: dialog following muncul");
     return "dialog";
   }
 
-  // Cek mobile (halaman /following)
-  if (page.url().includes("/following")) {
-    console.log("✅ Mode Mobile: halaman following terbuka");
-    return "page";
-  }
-
-  console.log("❌ Gagal buka daftar following");
+  console.log("❌ Following tidak terdeteksi terbuka");
   return false;
 }
 
