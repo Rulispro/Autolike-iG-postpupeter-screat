@@ -282,6 +282,11 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
   await page.waitForSelector('div[role="dialog"]', { timeout: 10000 });
   console.log("✅ Popup followers terbuka");
 
+  await delay(2000);
+  console.log("✅ tunggu 2 detik sebelum klik tombol follow/ikuti ");
+
+ 
+  
   let count = 0;
 
   while (count < total) {
@@ -300,7 +305,7 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
       if (clicked) {
         count++;
         console.log(`➕ (evaluate) Follow ke-${count}`);
-        await delay(interval);
+        await delay(randomDelay());
         continue;
       }
     } catch {}
@@ -312,7 +317,7 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
         await btn[0].click();
         count++;
         console.log(`➕ (page.$) Follow ke-${count}`);
-        await delay(interval);
+        await delay(randomDelay());
         continue;
       }
     } catch {}
@@ -326,23 +331,20 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
           await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
           count++;
           console.log(`➕ (tap) Follow ke-${count}`);
-          await delay(interval);
+          await delay(randomDelay());
           continue;
         }
       }
     } catch {}
 
     // === Scroll jika tidak ada tombol follow ===
-    if (isDialog) {
-      console.log("❌ Tidak ada tombol follow, scroll dialog...");
-      await page.evaluate(() => {
-        const dialog = document.querySelector('div[role="dialog"] ul') || document.querySelector('div._aano ul');
-        if (dialog) dialog.scrollBy(0, 200);
-      });
-    } else {
-      console.log("❌ Tidak ada tombol follow, scroll halaman...");
-      await page.evaluate(() => window.scrollBy(0, 500));
-    }
+    console.log("❌ Tidak ada tombol follow, scroll dialog...");
+await page.evaluate(() => {
+  const dialog = document.querySelector('div[role="dialog"] ul') 
+              || document.querySelector('div._aano ul');
+  if (dialog) dialog.scrollBy(0, 300);
+});
+
     await delay(1000);
   }
 
