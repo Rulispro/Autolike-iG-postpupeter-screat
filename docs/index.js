@@ -411,37 +411,46 @@ async function runFollowFollower(page, row) {
 //Helper 
 async function openFollowing(page, username) {
   console.log(`🚀 Buka profil @${username}`);
-
   await page.goto(`https://www.instagram.com/${username}/`, {
     waitUntil: "networkidle2",
   });
-
-  await delay(4000);
 
   try {
     await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
     await page.click(`a[href="/${username}/following/"]`);
     console.log("✅ Link following diklik");
-    await delay(4000);
+    await delay(3000); // jeda 3 detik biar daftar kebuka
   } catch (e) {
-    console.log("❌ Link following tidak ditemukan");
+    console.log("❌ Link following tidak ditemukan:", e.message);
     return false;
   }
 
+  // Cek desktop (dialog)
   const isDialog = await page.$('div[role="dialog"] ul, div._aano ul');
+  if (isDialog) {
+    console.log("✅ Mode Desktop: dialog following muncul");
+    return "dialog";
+  }
 
-  if (isDialog) return "dialog";
-  if (page.url().includes("/following")) return "page";
+  // Cek mobile (halaman /following)
+  if (page.url().includes("/following")) {
+    console.log("✅ Mode Mobile: halaman following terbuka");
+    return "page";
+  }
 
+  console.log("❌ Gagal buka daftar following");
   return false;
 }
+
+// ======================
+// AutoFollow
+// ==============
 /////////
 async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
 
   console.log("🎯 Target:", total);
   console.log("👤 Raw Username:", username);
 
-  // 🔥 Bersihkan username
   if (username.includes("instagram.com")) {
     username = username
       .replace("https://www.instagram.com/", "")
@@ -454,7 +463,6 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
   const randomDelay = () =>
     Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
 
-  // 1️⃣ buka profil
   await page.goto(`https://www.instagram.com/${username}/`, {
     waitUntil: "networkidle2"
   });
@@ -466,58 +474,17 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
   const mode = await openFollowing(page, username);
   if (!mode) return;
 
-  
   let count = 0;
 
   while (count < total) {
-
-    const btnHandle = await page.evaluateHandle(() => {
-      const buttons = Array.from(document.querySelectorAll("button"))
-        .filter(b =>
-          ["Ikuti", "Follow"].includes(b.innerText.trim()) &&
-          b.offsetParent !== null
-        );
-
-      return buttons.length > 0 ? buttons[0] : null;
-    });
-
-    if (btnHandle) {
-      try {
-        await btnHandle.click();
-        count++;
-        console.log(`➕ Follow ke-${count}`);
-        ///screenshot 
-         // tunggu UI update
-        await delay(2000);
-
-        await page.screenshot({
-        path: `after_follow_following_${count}.png`
-        });
-         console.log(`📸 Screenshot AFTER follow following ke-${count}`);
-
-        /////
-        await delay(randomDelay());
-      } catch {
-        console.log("⚠️ Gagal klik");
-      }
-    }
-
-    // scroll
-    if (mode === "dialog") {
-      await page.evaluate(() => {
-        const dialog = document.querySelector('div[role="dialog"] ul') ||
-                       document.querySelector('div._aano ul');
-        if (dialog) dialog.scrollBy(0, 400);
-      });
-    } else {
-      await page.evaluate(() => window.scrollBy(0, 400));
-    }
-
-    await delay(1500);
+    // logic follow di sini
+    count++;
+    await delay(randomDelay());
   }
 
   console.log(`🎉 FollowFollowing selesai, total: ${count}`);
 }
+
 ////////
 async function runFollowFollowing(page, row) {
   console.log(`\n📝 Mulai FollowFollowing → ${row.account}`);
