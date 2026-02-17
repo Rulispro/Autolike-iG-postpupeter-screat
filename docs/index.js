@@ -216,11 +216,11 @@ await delay(1000);
 
 
     //
-    await delay(2000); // beri waktu UI berubah
-    await page.screenshot({
-      path: `after_like_${i + 1}.png`
-    });
-    console.log(`📸 Screenshot AFTER like ke-${i + 1}`);
+  //  await delay(2000); // beri waktu UI berubah
+   // await page.screenshot({
+     // path: `after_like_${i + 1}.png`
+   // });
+  //  console.log(`📸 Screenshot AFTER like ke-${i + 1}`);
 
     ////
     
