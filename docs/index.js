@@ -515,7 +515,7 @@ async function runFollowFollowing(page, row) {
   }
 
   // 🔥 AUTO NGIKUT ROW XLSX
-  await autoFollowFollowing(page, targetUsername, total, delayMin, delayMax);
+  await autoFollowFollowing(page, username, total, delayMin, delayMax);
 
   console.log(`✅ FollowFollowing selesai untuk ${row.account}`);
 }
