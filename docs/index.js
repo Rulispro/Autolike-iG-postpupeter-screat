@@ -418,38 +418,21 @@ async function openFollowing(page, username) {
 
   try {
     await page.waitForSelector(`a[href="/${username}/following/"]`, { timeout: 8000 });
-    await page.click(`a[href="/${username}/following/"]`);
-    console.log("✅ Link following diklik");
 
-    // 🔥 tunggu kemungkinan redirect ke halaman following
-    await page.waitForTimeout(3000);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "networkidle2", timeout: 10000 }),
+      page.click(`a[href="/${username}/following/"]`)
+    ]);
 
-  } catch (e) {
-    console.log("❌ Link following tidak ditemukan:", e.message);
-    return false;
-  }
-
-  // 🔥 cek URL dulu (mobile mode)
-  if (page.url().includes("/following")) {
     console.log("✅ Mode Mobile: halaman following terbuka");
     return "page";
+
+  } catch (e) {
+    console.log("❌ Following tidak terbuka:", e.message);
+    return false;
   }
-
-  // 🔥 cek dialog (desktop mode)
-  try{
-    await page.waitForFunction(() => {
-    const dialog = document.querySelector('div[role="dialog"]');
-    if (!dialog) return false;
-
-    return dialog.innerText.toLowerCase().includes("following");
-  }, { timeout: 7000 });
-
-  console.log("✅ Following popup terdeteksi terbuka");
-} catch (err) {
-  console.log("❌ Following tidak terdeteksi terbuka");
-  return;
 }
-}
+
 // ======================
 // AutoFollow
 // ==============
