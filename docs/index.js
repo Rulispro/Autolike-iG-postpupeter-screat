@@ -644,64 +644,37 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
   let count = 0;
 
   while (count < total) {
+while (count < total) {
 
-    const btnHandle = await page.evaluateHandle(() => {
-      const buttons = Array.from(document.querySelectorAll("button"))
-        .filter(b =>
-          /Diikuti|Following/i.test(b.innerText.trim()) &&
-          b.offsetParent !== null
-        );
+  const buttons = await page.$x("//button[contains(., 'Following') or contains(., 'Diikuti')]");
 
-      return buttons.length > 0 ? buttons[0] : null;
+  if (!buttons.length) {
+    console.log("🔄 Scroll cari tombol...");
+    await page.evaluate(() => {
+      const dialog = document.querySelector('div[role="dialog"] ul');
+      if (dialog) dialog.scrollBy(0, 400);
     });
+    await delay(2000);
+    continue;
+  }
 
-    if (!btnHandle) {
-      console.log("🔄 Scroll cari tombol...");
-      await page.evaluate(() => {
-        const dialog = document.querySelector('div[role="dialog"] ul') ||
-                       document.querySelector('div._aano ul');
-        if (dialog) dialog.scrollBy(0, 400);
-        else window.scrollBy(0, 400);
-      });
-      await delay(2000);
-      continue;
-    }
+  await buttons[0].click();
+  console.log(`🔘 Klik Following ke-${count + 1}`);
+  await delay(1500);
 
-    try {
-      await btnHandle.click();
-      console.log(`🔘 Klik Following ke-${count + 1}`);
-      await delay(1500);
+  const confirmBtn = await page.$x("//button[contains(., 'Unfollow') or contains(., 'Batal mengikuti')]");
 
-      const confirmClicked = await page.evaluate(() => {
-        const btn = Array.from(document.querySelectorAll("button"))
-          .find(b => /Batal mengikuti|Unfollow/i.test(b.innerText));
-        if (btn) {
-          btn.click();
-          return true;
-        }
-        return false;
-      });
+  if (confirmBtn.length) {
+    await confirmBtn[0].click();
+    count++;
+    console.log(`❌ Unfollow ke-${count} berhasil`);
+    await delay(2000);
+  } else {
+    console.log("⚠️ Tombol konfirmasi tidak ditemukan");
+  }
 
-      if (confirmClicked) {
-        count++;
-        console.log(`❌ Unfollow ke-${count} berhasil`);
-        //screenshot 
-        
-        await delay(2000);
-
-        await page.screenshot({
-         path: `after_unfollow_${count}.png`
-         });
-        console.log(`📸 Screenshot AFTER unfollow ke-${count}`);
-
-  
-        }
-        
-        ///
-        await delay(randomDelay());
-      
-
-    } catch {
+  await delay(randomDelay());
+  } catch {
       console.log("⚠️ Gagal klik tombol");
     }
   
