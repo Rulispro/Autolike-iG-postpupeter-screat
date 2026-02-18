@@ -638,8 +638,11 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
   const mode = await openFollowingSelf(page, username);
   if (!mode) return;
 
+  const min = Math.min(delayMin, delayMax);
+  const max = Math.max(delayMin, delayMax);
+
   const randomDelay = () =>
-    Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+    Math.floor(Math.random() * (max - min + 1)) + min;
 
   let count = 0;
 
@@ -667,25 +670,39 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
 
       await buttons[0].click();
       console.log(`🔘 Klik Following ke-${count + 1}`);
-
       await delay(1500);
 
       const confirmClicked = await page.evaluate(() => {
-  const dialog = document.querySelector('div[role="dialog"]');
-  if (!dialog) return false;
+        const dialog = document.querySelector('div[role="dialog"]');
+        if (!dialog) return false;
 
-  const btn = Array.from(dialog.querySelectorAll("button"))
-    .find(b =>
-      /Unfollow|Batal mengikuti/i.test(b.innerText.trim())
-    );
+        const btn = Array.from(dialog.querySelectorAll("button"))
+          .find(b =>
+            /Unfollow|Batal mengikuti/i.test(b.innerText.trim())
+          );
 
-  if (btn) {
-    btn.click();
-    return true;
-  }
+        if (btn) {
+          btn.click();
+          return true;
+        }
 
-  return false;
-});
+        return false;
+      });
+
+      if (confirmClicked) {
+        count++;
+        console.log(`❌ Unfollow ke-${count} berhasil`);
+
+        await delay(2000);
+
+        await page.screenshot({
+          path: `after_unfollow_${count}.png`
+        });
+
+      } else {
+        console.log("⚠️ Tombol konfirmasi tidak ditemukan");
+        await page.keyboard.press("Escape");
+      }
 
       await delay(randomDelay());
 
@@ -697,6 +714,7 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
 
   console.log(`🎉 Unfollow selesai, total: ${count}`);
 }
+
 
 
 
