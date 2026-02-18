@@ -310,7 +310,8 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
 
   // 📸 Screenshot setelah follow
   await page.screenshot({
-    path: `after_follow_${count}.png`
+    path: `after_follow_follower_${count}.png
+    `
   });
         await delay(randomDelay());
         continue;
@@ -329,7 +330,7 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
 
   // 📸 Screenshot setelah follow
   await page.screenshot({
-    path: `after_follow_${count}.png`
+    path: `after_follow_follower_${count}.png`
   });
         await delay(randomDelay());
         continue;
@@ -350,7 +351,7 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
 
   // 📸 Screenshot setelah follow
   await page.screenshot({
-    path: `after_follow_${count}.png`
+    path: `after_follow_follower_${count}.png`
   });
           await delay(randomDelay());
           continue;
@@ -505,7 +506,8 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
         await delay(2000);
 
         await page.screenshot({
-          path: `after_follow_${count}.png`
+          path: `after_follow_following_${count}.png
+          `
         });
 
         await delay(randomDelay());
@@ -528,7 +530,7 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
     await delay(1500);
   }
 
-  console.log(`🎉 AutoFollow selesai, total follow: ${count}`);
+  console.log(`🎉 AutoFollow dari daftar following selesai, total follow: ${count}`);
 }
 
 
