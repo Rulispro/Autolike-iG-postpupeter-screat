@@ -506,8 +506,7 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
         await delay(2000);
 
         await page.screenshot({
-          path: `after_follow_following_${count}.png
-          `
+          path: `after_follow_following_${count}.png`
         });
 
         await delay(randomDelay());
