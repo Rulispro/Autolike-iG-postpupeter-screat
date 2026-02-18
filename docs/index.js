@@ -644,43 +644,62 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
   let count = 0;
 
   while (count < total) {
-while (count < total) {
 
-  const buttons = await page.$x("//button[contains(., 'Following') or contains(., 'Diikuti')]");
+    try {
 
-  if (!buttons.length) {
-    console.log("🔄 Scroll cari tombol...");
-    await page.evaluate(() => {
-      const dialog = document.querySelector('div[role="dialog"] ul');
-      if (dialog) dialog.scrollBy(0, 400);
-    });
-    await delay(2000);
-    continue;
-  }
+      const buttons = await page.$x(
+        "//button[contains(., 'Following') or contains(., 'Diikuti')]"
+      );
 
-  await buttons[0].click();
-  console.log(`🔘 Klik Following ke-${count + 1}`);
-  await delay(1500);
+      if (!buttons.length) {
+        console.log("🔄 Scroll cari tombol...");
+        await page.evaluate(() => {
+          const dialog =
+            document.querySelector('div[role="dialog"] ul') ||
+            document.querySelector('div._aano ul');
 
-  const confirmBtn = await page.$x("//button[contains(., 'Unfollow') or contains(., 'Batal mengikuti')]");
+          if (dialog) dialog.scrollBy(0, 400);
+        });
 
-  if (confirmBtn.length) {
-    await confirmBtn[0].click();
-    count++;
-    console.log(`❌ Unfollow ke-${count} berhasil`);
-    await delay(2000);
-  } else {
-    console.log("⚠️ Tombol konfirmasi tidak ditemukan");
-  }
+        await delay(2000);
+        continue;
+      }
 
-  await delay(randomDelay());
-  } catch {
-      console.log("⚠️ Gagal klik tombol");
+      await buttons[0].click();
+      console.log(`🔘 Klik Following ke-${count + 1}`);
+
+      await delay(1500);
+
+      const confirmBtn = await page.$x(
+        "//div[@role='dialog']//button[contains(., 'Unfollow') or contains(., 'Batal mengikuti')]"
+      );
+
+      if (confirmBtn.length) {
+        await confirmBtn[0].click();
+        count++;
+        console.log(`❌ Unfollow ke-${count} berhasil`);
+
+        await delay(2000);
+
+        await page.screenshot({
+          path: `after_unfollow_${count}.png`
+        });
+
+      } else {
+        console.log("⚠️ Tombol konfirmasi tidak ditemukan");
+      }
+
+      await delay(randomDelay());
+
+    } catch (err) {
+      console.log("⚠️ Error di loop unfollow:", err.message);
     }
-  
-}
+
+  }
+
   console.log(`🎉 Unfollow selesai, total: ${count}`);
 }
+
 
 
 (async () => {
