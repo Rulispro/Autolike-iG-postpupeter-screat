@@ -46,6 +46,32 @@ function parseTanggalXLSX(tgl) {
   return null;
 }
 
+//KLIK TOMBOL NOT NOW SEBELUM KLIK TOMBOL FOLLOW/IKUTI
+async function handleSaveLoginPopup(page) {
+  try {
+    await page.waitForSelector('button', { timeout: 5000 });
+
+    const clicked = await page.evaluate(() => {
+      const btn = [...document.querySelectorAll("button")]
+        .find(b => /Not now|Nanti|Sekarang tidak/i.test(b.innerText));
+
+      if (btn) {
+        btn.click();
+        return true;
+      }
+      return false;
+    });
+
+    if (clicked) {
+      console.log("✅ Popup Save Login ditutup");
+      await page.waitForTimeout(2000);
+    }
+
+  } catch (err) {
+    console.log("ℹ️ Tidak ada popup Save Login");
+  }
+}
+
 
 //)
 async function openFollowingSelf(page, username) {
@@ -283,9 +309,12 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
   console.log("✅ Popup followers terbuka");
 
   await delay(2000);
-  console.log("✅ tunggu 2 detik sebelum klik tombol follow/ikuti ");
+  console.log("✅ tunggu 2 detik sebelum klik tombol NOT NOW DI POPUP ");
+  
+   await handleSaveLoginPopup(page);
 
- 
+  await delay(2000);
+  console.log("✅ tunggu 2 detik sebelum klik tombol follow/ikuti ");
   
   let count = 0;
 
@@ -310,8 +339,7 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
 
   // 📸 Screenshot setelah follow
   await page.screenshot({
-    path: `after_follow_follower_${count}.png
-    `
+    path: `after_follow_follower_${count}.png`
   });
         await delay(randomDelay());
         continue;
@@ -476,6 +504,12 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
   if (!mode) return;
 
   await delay(2000);
+  console.log("TUNGGU KLIK TOMBOL NOT NOW DI POPUP");
+// 🔥 TAMBAHKAN KLIK TOMBOL NOT NOW
+await handleSaveLoginPopup(page);
+
+  await delay(2000);
+  console.log("TUNGGU SEBELUM KLIK TOMBOL FOLLOW");
 
   let count = 0;
 
