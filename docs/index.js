@@ -387,9 +387,9 @@ async function runFollowFollower(page, row) {
   }
 
   // buka home dulu
-  await page.goto("https://www.instagram.com/", {
-    waitUntil: "networkidle2"
-  });
+//  await page.goto("https://www.instagram.com/", {
+  //  waitUntil: "networkidle2"
+//  });
 
   await delay(4000);
 
@@ -548,9 +548,9 @@ async function runFollowFollowing(page, row) {
     return;
 }
 
-  await page.goto("https://www.instagram.com/", {
-    waitUntil: "networkidle2"
-  });
+//  await page.goto("https://www.instagram.com/", {
+  //  waitUntil: "networkidle2"
+ // });
 
   await delay(4000);
 
