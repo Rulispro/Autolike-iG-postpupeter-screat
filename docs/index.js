@@ -48,28 +48,17 @@ function parseTanggalXLSX(tgl) {
 
 //KLIK TOMBOL NOT NOW SEBELUM KLIK TOMBOL FOLLOW/IKUTI
 async function handleSaveLoginPopup(page) {
-  try {
-    await page.waitForSelector('button', { timeout: 5000 });
+try {
+  const [btn] = await page.$x(
+    "//span[contains(text(),'Lain') or contains(text(),'Not') or contains(text(),'Nanti')]"
+  );
 
-    const clicked = await page.evaluate(() => {
-      const btn = [...document.querySelectorAll("button")]
-        .find(b => /Not now|Nanti|Sekarang tidak/i.test(b.innerText));
-
-      if (btn) {
-        btn.click();
-        return true;
-      }
-      return false;
-    });
-
-    if (clicked) {
-      console.log("✅ Popup Save Login ditutup");
-      await page.waitForTimeout(2000);
-    }
-
-  } catch (err) {
-    console.log("ℹ️ Tidak ada popup Save Login");
+  if (btn) {
+    await btn.click();
+    console.log("✅ Popup ditutup (Lain kali / Not Now)");
+    await page.waitForTimeout(2000);
   }
+} catch {}
 }
 
 
@@ -242,11 +231,11 @@ await delay(1000);
 
 
     //
-  //  await delay(2000); // beri waktu UI berubah
-   // await page.screenshot({
-     // path: `after_like_${i + 1}.png`
-   // });
-  //  console.log(`📸 Screenshot AFTER like ke-${i + 1}`);
+    await delay(2000); // beri waktu UI berubah
+    await page.screenshot({
+      path: `after_like_${i + 1}.png`
+    });
+    console.log(`📸 Screenshot AFTER like ke-${i + 1}`);
 
     ////
     
