@@ -670,24 +670,22 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
 
       await delay(1500);
 
-      const confirmBtn = await page.$x(
-        "//div[@role='dialog']//button[contains(., 'Unfollow') or contains(., 'Batal mengikuti')]"
-      );
+      const confirmClicked = await page.evaluate(() => {
+  const dialog = document.querySelector('div[role="dialog"]');
+  if (!dialog) return false;
 
-      if (confirmBtn.length) {
-        await confirmBtn[0].click();
-        count++;
-        console.log(`❌ Unfollow ke-${count} berhasil`);
+  const btn = Array.from(dialog.querySelectorAll("button"))
+    .find(b =>
+      /Unfollow|Batal mengikuti/i.test(b.innerText.trim())
+    );
 
-        await delay(2000);
+  if (btn) {
+    btn.click();
+    return true;
+  }
 
-        await page.screenshot({
-          path: `after_unfollow_${count}.png`
-        });
-
-      } else {
-        console.log("⚠️ Tombol konfirmasi tidak ditemukan");
-      }
+  return false;
+});
 
       await delay(randomDelay());
 
