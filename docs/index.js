@@ -453,12 +453,11 @@ async function openFollowing(page, username) {
 // AutoFollow
 // ==============
 /////////
-async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
+
+    async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
 
   console.log("🎯 Target:", total);
-  console.log("👤 Raw Username:", username);
 
-  // bersihkan username
   if (username.includes("instagram.com")) {
     username = username
       .replace("https://www.instagram.com/", "")
@@ -466,12 +465,9 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
       .replace("/", "");
   }
 
-  console.log("👤 Username bersih:", username);
-
   const randomDelay = () =>
     Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
 
-  // buka popup following
   const mode = await openFollowing(page, username);
   if (!mode) return;
 
@@ -481,53 +477,55 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
 
   while (count < total) {
 
-    let clicked = false;
-
-    // === 1. Evaluate ===
-    try {
-      clicked = await page.evaluate(() => {
-        const btn = [...document.querySelectorAll("button")]
-          .find(b =>
-            ["Ikuti", "Follow"].includes(b.innerText.trim()) &&
-            b.offsetParent !== null
-          );
-
-        if (!btn) return false;
-
-        btn.scrollIntoView({ behavior: "smooth", block: "center" });
-        btn.click();
-        return true;
-      });
-
-      if (clicked) {
-        count++;
-        console.log(`➕ Follow ke-${count}`);
-
-        await delay(2000);
-
-        await page.screenshot({
-          path: `after_follow_following_${count}.png
-          `
-        });
-
-        await delay(randomDelay());
-        continue;
-      }
-
-    } catch {}
-
-    // === Scroll jika tidak ada tombol follow ===
-    console.log("🔄 Scroll cari tombol follow...");
-
-    await page.evaluate(() => {
+    const buttonHandle = await page.evaluateHandle(() => {
       const dialog =
-        document.querySelector('div[role="dialog"] ul') ||
-        document.querySelector('div._aano ul');
+        document.querySelector('div[role="dialog"]') ||
+        document.querySelector('div._aano');
 
-      if (dialog) dialog.scrollBy(0, 400);
+      if (!dialog) return null;
+
+      const btn = Array.from(dialog.querySelectorAll("button"))
+        .find(b =>
+          ["Ikuti", "Follow"].includes(b.innerText.trim()) &&
+          b.offsetParent !== null
+        );
+
+      return btn || null;
     });
 
+    const btn = buttonHandle.asElement();
+
+    if (!btn) {
+      console.log("🔄 Scroll cari tombol follow...");
+      await page.evaluate(() => {
+        const dialog =
+          document.querySelector('div[role="dialog"] ul') ||
+          document.querySelector('div._aano ul');
+        if (dialog) dialog.scrollBy(0, 400);
+      });
+      await delay(1500);
+      continue;
+    }
+
+    await btn.click();
+    console.log(`➕ Follow ke-${count + 1}`);
+
+    // tunggu sampai berubah jadi Following
+    await page.waitForFunction(
+      el => /Following|Diikuti/i.test(el.innerText),
+      { timeout: 5000 },
+      btn
+    ).catch(() => {});
+
+    count++;
+
     await delay(1500);
+
+    await page.screenshot({
+      path: `after_follow_following_${count}.png`
+    });
+
+    await delay(randomDelay());
   }
 
   console.log(`🎉 AutoFollow dari daftar following selesai, total follow: ${count}`);
