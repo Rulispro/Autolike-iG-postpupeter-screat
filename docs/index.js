@@ -227,7 +227,8 @@ async function autoLike(page, total, delayMin, delayMax, scrollDelayMin,
     if (!result) {
       console.log(`❌ Like ke-${i + 1} gagal, scroll...`);
       await page.evaluate(() => window.scrollBy(0, 900));
-      await delay(2500);
+      //await delay(2500);
+      await delay(randomScrollDelay());
       i--;
       continue;
     }
@@ -235,11 +236,13 @@ async function autoLike(page, total, delayMin, delayMax, scrollDelayMin,
     console.log(`❤️ Like ke-${i + 1} berhasil`);
   ///screenshot 
 await page.evaluate(() => window.focus());
-await delay(1000);
-
+//await delay(1000);
+await delay(randomDelay());
+    
 
     //
-    await delay(2000); // beri waktu UI berubah
+   // await delay(2000); // beri waktu UI berubah
+    await delay(randomDelay());
     await page.screenshot({
       path: `after_like_${i + 1}.png`
     });
