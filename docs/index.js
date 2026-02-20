@@ -279,9 +279,6 @@ async function autoFollow(page, username, total, delayMin, delayMax, scrollDelay
   const randomDelay = () =>
     Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
 
-  const randomDelay = () =>
-  Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
-
 const randomScrollDelay = () =>
   Math.floor(Math.random() * (scrollDelayMax - scrollDelayMin + 1)) + scrollDelayMin;
 
@@ -527,9 +524,6 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax, sc
   const randomDelay = () =>
     Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
  
-  const randomDelay = () =>
-  Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
-
 const randomScrollDelay = () =>
   Math.floor(Math.random() * (scrollDelayMax - scrollDelayMin + 1)) + scrollDelayMin;
 
@@ -712,9 +706,6 @@ async function autoUnfollow(page, username, total, delayMin, delayMax, scrollDel
 
   const randomDelay = () =>
     Math.floor(Math.random() * (max - min + 1)) + min;
-
-   const randomDelay = () =>
-  Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
 
 const randomScrollDelay = () =>
   Math.floor(Math.random() * (scrollDelayMax - scrollDelayMin + 1)) + scrollDelayMin;
@@ -948,7 +939,7 @@ console.log(`📋 igUnfollowRows row ${acc.account}:`, rowsIGUnfollowForAccount.
       if (mode === "FollowFollower") {
 
   for (const row of rowsIGFollowFollowerForAccount) {
-     logTemplateRow("LIKE", row);
+     logTemplateRow("FOLLOWFOLLOWER", row);
     await runFollowFollower(page, row);
   }
 }
@@ -956,7 +947,7 @@ console.log(`📋 igUnfollowRows row ${acc.account}:`, rowsIGUnfollowForAccount.
       if (mode === "FollowFollowing") {
 
   for (const row of rowsIGFollowFollowingForAccount) {
-    logTemplateRow("LIKE", row);
+    logTemplateRow("FOLLOWFOLLOWING", row);
     await runFollowFollowing(page, row);
   }
 }
@@ -964,7 +955,7 @@ console.log(`📋 igUnfollowRows row ${acc.account}:`, rowsIGUnfollowForAccount.
 if (mode === "Unfollow") {
 
   for (const row of rowsIGUnfollowForAccount) {
-    logTemplateRow("LIKE", row);
+    logTemplateRow("UNFOLLOW", row);
     await runIGUnfollow(page, row);
   }
 }
