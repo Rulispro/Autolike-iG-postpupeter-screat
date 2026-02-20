@@ -128,6 +128,8 @@ async function runLike(page, row) {
   const total = Number(row.total) || 0;
   const delayMin = Number(row.delay_min) || 2000;
   const delayMax = Number(row.delay_max) || 4000;
+  const scrollDelayMin = Number(row.scroll_delay_min) || 1000;
+  const scrollDelayMax = Number(row.scroll_delay_max) || 3000;
 
   if (total <= 0) {
     console.log("⚠️ Total kosong, skip");
@@ -181,19 +183,25 @@ await page.evaluate(() => {
   await delay(3000);
 
   // 👇 AUTO NGIKUT TEMPLATE
-  await autoLike(page, total, delayMin, delayMax);
+  await autoLike(page, total, delayMin, delayMax, scrollDelayMin,
+  scrollDelayMax);
 
   console.log(`✅ Like selesai untuk ${row.account}`);
 }
 
   // 👇 AUTO NGIKUT TEMPLATE
-async function autoLike(page, total, delayMin, delayMax) {
+async function autoLike(page, total, delayMin, delayMax, scrollDelayMin,
+  scrollDelayMax) {
   console.log(`🚀 Mulai AutoLike`);
   console.log(`🎯 Target: ${total}`);
   console.log(`⏳ Delay: ${delayMin} - ${delayMax}`);
 
   const randomDelay = () =>
     Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+  const randomScrollDelay = () =>
+  Math.floor(Math.random() * (scrollDelayMax - scrollDelayMin + 1)) + scrollDelayMin;
+  
 
   for (let i = 0; i < total; i++) {
 
@@ -241,7 +249,7 @@ await delay(1000);
     
     await delay(randomDelay());
     await page.evaluate(() => window.scrollBy(0, 700));
-    await delay(2000);
+    await delay(randomScrollDelay());
   }
 
   console.log("✅ AutoLike selesai");
@@ -249,7 +257,10 @@ await delay(1000);
 // =====================
 // AUTO FOLLOW FOLLOWERS
 // =====================
-async function autoFollow(page, username, total, delayMin, delayMax) {
+async function autoFollow(page, username, total, delayMin, delayMax, scrollDelayMin,
+  scrollDelayMax,
+  afterClickMin,
+  afterClickMax) {
 
   console.log("🚀 Mulai AutoFollow Followers");
   console.log("🎯 Target:", total);
@@ -267,6 +278,16 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
 
   const randomDelay = () =>
     Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+  const randomDelay = () =>
+  Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+const randomScrollDelay = () =>
+  Math.floor(Math.random() * (scrollDelayMax - scrollDelayMin + 1)) + scrollDelayMin;
+
+const randomAfterClick = () =>
+  Math.floor(Math.random() * (afterClickMax - afterClickMin + 1)) + afterClickMin;
+
 
   // 1️⃣ buka profil
   await page.goto(`https://www.instagram.com/${username}/`, {
@@ -324,7 +345,9 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
         count++;
         console.log(`➕ (evaluate) Follow ke-${count}`);
           // 🕒 beri waktu UI berubah ke "Following"
-  await delay(2000);
+ // await delay(2000);
+        await delay(randomAfterClick());
+
 
   // 📸 Screenshot setelah follow
   await page.screenshot({
@@ -343,7 +366,9 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
         count++;
         console.log(`➕ (page.$) Follow ke-${count}`);
           // 🕒 beri waktu UI berubah ke "Following"
-  await delay(2000);
+ // await delay(2000);
+        await delay(randomAfterClick());
+
 
   // 📸 Screenshot setelah follow
   await page.screenshot({
@@ -364,7 +389,9 @@ async function autoFollow(page, username, total, delayMin, delayMax) {
           count++;
           console.log(`➕ (tap) Follow ke-${count}`);
            // 🕒 beri waktu UI berubah ke "Following"
-  await delay(2000);
+  //await delay(2000);
+          await delay(randomAfterClick());
+
 
   // 📸 Screenshot setelah follow
   await page.screenshot({
@@ -384,7 +411,9 @@ await page.evaluate(() => {
   if (dialog) dialog.scrollBy(0, 300);
 });
 
-    await delay(1000);
+   // await delay(1000);
+    await delay(randomScrollDelay());
+
   }
 
   console.log(`✅ AutoFollow selesai, total follow: ${count}`);
@@ -397,6 +426,10 @@ async function runFollowFollower(page, row) {
   const username = row.link_targetUsername;
   const delayMin = Number(row.delay_min) || 3000;
   const delayMax = Number(row.delay_max) || 6000;
+  const scrollDelayMin = Number(row.scroll_delay_min) || 1000;
+  const scrollDelayMax = Number(row.scroll_delay_max) || 2500;
+  const afterClickMin = Number(row.after_click_min) || 2000;
+  const afterClickMax = Number(row.after_click_max) || 3500;
 
   if (!total || !username) {
     console.log("⚠️ Data tidak lengkap, skip");
@@ -421,7 +454,10 @@ async function runFollowFollower(page, row) {
   }
 
   // 🔥 AUTO NGIKUT TEMPLATE XLSX
-  await autoFollow(page, username, total, delayMin, delayMax);
+  await autoFollow(page, username, total, delayMin, delayMax, scrollDelayMin,
+  scrollDelayMax,
+  afterClickMin,
+  afterClickMax);
 
   console.log(`✅ FollowFollower selesai untuk ${row.account}`);
 }
@@ -470,7 +506,10 @@ async function openFollowing(page, username) {
 // AutoFollow
 // ==============
 /////////
-async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
+async function autoFollowFollowing(page, username, total, delayMin, delayMax, scrollDelayMin,
+  scrollDelayMax,
+  afterClickMin,
+  afterClickMax) {
 
   console.log("🎯 Target:", total);
   console.log("👤 Raw Username:", username);
@@ -487,7 +526,16 @@ async function autoFollowFollowing(page, username, total, delayMin, delayMax) {
 
   const randomDelay = () =>
     Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+ 
+  const randomDelay = () =>
+  Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
 
+const randomScrollDelay = () =>
+  Math.floor(Math.random() * (scrollDelayMax - scrollDelayMin + 1)) + scrollDelayMin;
+
+const randomAfterClick = () =>
+  Math.floor(Math.random() * (afterClickMax - afterClickMin + 1)) + afterClickMin;
+  
   // buka popup following
   const mode = await openFollowing(page, username);
   if (!mode) return;
@@ -526,7 +574,9 @@ await handleSaveLoginPopup(page);
         count++;
         console.log(`➕ Follow ke-${count}`);
 
-        await delay(2000);
+        //await delay(2000);
+        await delay(randomAfterClick());
+        
 
         await page.screenshot({
           path: `after_follow_following_${count}.png`
@@ -549,7 +599,9 @@ await handleSaveLoginPopup(page);
       if (dialog) dialog.scrollBy(0, 400);
     });
 
-    await delay(1500);
+    //await delay(1500);
+    await delay(randomScrollDelay());
+    
   }
 
   console.log(`🎉 AutoFollow dari daftar following selesai, total follow: ${count}`);
@@ -565,6 +617,10 @@ async function runFollowFollowing(page, row) {
   const username = row.link_targetUsername;
   const delayMin = Number(row.delay_min) || 3000;
   const delayMax = Number(row.delay_max) || 6000;
+  const scrollDelayMin = Number(row.scroll_delay_min) || 1000;
+  const scrollDelayMax = Number(row.scroll_delay_max) || 2500;
+  const afterClickMin = Number(row.after_click_min) || 2000;
+  const afterClickMax = Number(row.after_click_max) || 4000;
 
   if (!total || !username) {
     console.log("⚠️ Data tidak lengkap, skip");
@@ -587,7 +643,10 @@ async function runFollowFollowing(page, row) {
   }
 
   // 🔥 AUTO NGIKUT ROW XLSX
-  await autoFollowFollowing(page, username, total, delayMin, delayMax);
+  await autoFollowFollowing(page, username, total, delayMin, delayMax, scrollDelayMin,
+  scrollDelayMax,
+  afterClickMin,
+  afterClickMax);
 
   console.log(`✅ FollowFollowing selesai untuk ${row.account}`);
 }
@@ -601,6 +660,10 @@ async function runIGUnfollow(page, row) {
   const total = Number(row.total) || 0;
   const delayMin = Number(row.delay_min) || 4000;
   const delayMax = Number(row.delay_max) || 7000;
+  const scrollDelayMin = Number(row.scroll_delay_min) || 1500;
+  const scrollDelayMax = Number(row.scroll_delay_max) || 3000;
+  const afterClickMin = Number(row.after_click_min) || 1500;
+  const afterClickMax = Number(row.after_click_max) || 3500;
 
   if (!total) {
     console.log("⚠️ Total kosong, skip");
@@ -611,7 +674,7 @@ async function runIGUnfollow(page, row) {
     waitUntil: "networkidle2"
   });
 
-  await delay(4000);
+  await delay(3000);
 
   const isLogin = await page.evaluate(() => {
     return document.body.innerText.includes("Log in") === false;
@@ -623,13 +686,19 @@ async function runIGUnfollow(page, row) {
   }
 
   // 🔥 AUTO NGIKUT XLSX
-  await autoUnfollow(page, username, total, delayMin, delayMax);
+  await autoUnfollow(page, username, total, delayMin, delayMax, scrollDelayMin,
+  scrollDelayMax,
+  afterClickMin,
+  afterClickMax);
 
   console.log(`✅ Unfollow selesai untuk ${row.account}`);
 }
 
 //////)
-async function autoUnfollow(page, username, total, delayMin, delayMax) {
+async function autoUnfollow(page, username, total, delayMin, delayMax, scrollDelayMin,
+  scrollDelayMax,
+  afterClickMin,
+  afterClickMax) {
 
   console.log(`🚀 Mulai Unfollow`);
   console.log(`🎯 Target: ${total}`);
@@ -644,6 +713,16 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
   const randomDelay = () =>
     Math.floor(Math.random() * (max - min + 1)) + min;
 
+   const randomDelay = () =>
+  Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+
+const randomScrollDelay = () =>
+  Math.floor(Math.random() * (scrollDelayMax - scrollDelayMin + 1)) + scrollDelayMin;
+
+const randomAfterClick = () =>
+  Math.floor(Math.random() * (afterClickMax - afterClickMin + 1)) + afterClickMin;
+
+  
   let count = 0;
 
   while (count < total) {
@@ -664,13 +743,16 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
           if (dialog) dialog.scrollBy(0, 400);
         });
 
-        await delay(2000);
+        //await delay(2000);
+        await delay(randomScrollDelay());
         continue;
       }
 
       await buttons[0].click();
       console.log(`🔘 Klik Following ke-${count + 1}`);
-      await delay(1500);
+     // await delay(1500);
+      await delay(randomAfterClick());
+
 
       const confirmClicked = await page.evaluate(() => {
         const dialog = document.querySelector('div[role="dialog"]');
@@ -693,7 +775,9 @@ async function autoUnfollow(page, username, total, delayMin, delayMax) {
         count++;
         console.log(`❌ Unfollow ke-${count} berhasil`);
 
-        await delay(2000);
+        //await delay(2000);
+        await delay(randomAfterClick());
+        
 
         await page.screenshot({
           path: `after_unfollow_${count}.png`
